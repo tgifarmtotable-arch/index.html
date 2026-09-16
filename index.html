@@ -1,12 +1,14 @@
-<!-- SISTEMA ULTRA LIGERO DISTRIBUIDORA TGI - MÁXIMA VELOCIDAD -->
+<!-- SISTEMA PREMIUM ULTRA VELOZ DISTRIBUIDORA TGI -->
 <div id="tgi-bloque-sistema" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 650px; margin: 0 auto; padding: 10px; background: #ffffff;">
   
-  <!-- BOTONES DE PESTAÑAS SIMPLES Y RÁPIDAS -->
-  <div id="tgi-pestañas" style="display: flex; gap: 8px; overflow-x: auto; padding: 5px 0; margin-bottom: 15px; border-bottom: 2px solid #fafafa; -webkit-overflow-scrolling: touch;"></div>
+  <!-- BARRA DE PESTAÑAS INDEPENDIENTES -->
+  <div id="tgi-pestañas" style="display: flex; gap: 8px; overflow-x: auto; padding: 8px 0; margin-bottom: 15px; border-bottom: 2px solid #f7f9fa; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+    <!-- Se generan solas aquí -->
+  </div>
 
-  <!-- LISTADO DE PRODUCTOS FINO Y COMPACTO -->
-  <div id="contenedor-productos" style="display: flex; flex-direction: column; gap: 4px;">
-    <p style="text-align: center; color: #999; font-size: 0.9em; padding: 20px;">Cargando catálogo Distribuidora TGI...</p>
+  <!-- SECCIÓN DE PRODUCTOS COMPACTA -->
+  <div id="contenedor-productos" style="display: flex; flex-direction: column; gap: 5px;">
+    <p style="text-align: center; color: #999; font-size: 0.95em; padding: 30px;">Conectando de forma segura con la lista...</p>
   </div>
 </div>
 
@@ -15,105 +17,107 @@ let todosLosProductos = [];
 let grupoSeleccionado = "";
 const NÚMERO_WHATSAPP = "51917764281";
 
-// 1. Descargar la matriz unificada de forma directa y veloz
-async function cargarWebMatriz() {
-  const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbPkbgiCxe2RMmyLOrObjSI7yG6u9sszjPvC0BM8mKb3S4Q_lhZLqAaOdAhFW6glpChhoWvdYpHan7/pub?gid=1523459015&single=true&output=csv";
-  
-  try {
-    const res = await fetch(urlCSV);
-    const texto = await res.text();
-    
-    // Convertir el texto CSV a líneas limpias de forma óptima
-    const lineas = texto.split(/\r?\n/);
-    todosLosProductos = [];
-    
-    for (let i = 1; i < lineas.length; i++) {
-      if (!lineas[i].trim()) continue;
-      
-      // Separar por comas quitando comillas de texto
-      const celdas = lineas[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-      
-      if (celdas.length >= 6 && celdas[0]) {
-        todosLosProductos.push({
-          id: i,
-          categoria: celdas[0], // Columna A
-          producto: celdas[1],  // Columna B
-          medida: celdas[2],    // Columna C
-          precio: parseFloat(celdas[5]) || 0, // Columna F
-          cantidad: 0,
-          nota: ""
-        });
-      }
-    }
+// 1. Descarga veloz usando la API pública de Google (Evita bloqueos de GitHub)
+function cargarWebMatriz() {
+  // ID de tu documento unificado WEB MATRIZ
+ const urlJSON = "https://google.com";
 
-    if (todosLosProductos.length > 0) {
-      grupoSeleccionado = todosLosProductos[0].categoria;
-    }
-    
-    reconstruirPantalla();
-    crearBotonWhatsApp();
-  } catch (err) {
-    document.getElementById('contenedor-productos').innerHTML = "<p style='text-align:center; color:red;'>Error de conexión. Revisa tu señal.</p>";
-  }
+
+  fetch(urlJSON)
+    .then(res => res.text())
+    .then(texto => {
+      // Limpar el formato JSON que devuelve Google
+      const jsonLimpio = JSON.parse(texto.substring(47, texto.length - 2));
+      const filas = jsonLimpio.table.rows;
+      
+      todosLosProductos = [];
+      
+      filas.forEach((fila, index) => {
+        const c = fila.c;
+        // Validar que las celdas tengan contenido real
+        if (c[0] && c[1] && c[3]) {
+          todosLosProductos.push({
+            id: index,
+            categoria: c[0].v.toString().trim(), // Columna A
+            producto: c[1].v.toString().trim(),  // Columna B
+            medida: c[2] ? c[2].v.toString().trim() : "unid", // Columna C
+            precio: parseFloat(c[3].v) || 0,     // Columna F
+            cantidad: 0,
+            nota: ""
+          });
+        }
+      });
+
+      if (todosLosProductos.length > 0) {
+        grupoSeleccionado = todosLosProductos[0].categoria;
+      }
+      
+      reconstruirPantalla();
+      crearBotonWhatsApp();
+    })
+    .catch(err => {
+      document.getElementById('contenedor-productos').innerHTML = "<p style='text-align:center; color:#c0392b; font-size:0.9em; padding:20px;'>⚠️ Error al sincronizar con Google Sheets. Verifica la conexión.</p>";
+    });
 }
 
-// 2. Pintar la interfaz de forma ultra veloz en el teléfono
+// 2. Pintar el catálogo hiper-compacto y fino
 function reconstruirPantalla() {
   const divPestañas = document.getElementById('tgi-pestañas');
   const divProductos = document.getElementById('contenedor-productos');
   if (!divProductos) return;
 
-  // Sacar los grupos únicos de productos
+  // Extraer nombres de grupos sin repetir
   const grupos = [...new Set(todosLosProductos.map(p => p.categoria))];
 
-  // Inyectar pestañas estilizadas pero de carga inmediata
+  // Renderizar los botones redondeados de pestañas superiores
   if (divPestañas) {
     divPestañas.innerHTML = grupos.map(g => {
       const activo = g === grupoSeleccionado;
       return `
         <button onclick="cambiarDeGrupo('${g}')" style="
-          padding: 6px 14px;
-          background: ${activo ? '#1E8449' : '#f5f7fa'};
+          padding: 6px 15px;
+          background: ${activo ? '#1E8449' : '#f4f6f8'};
           color: ${activo ? '#ffffff' : '#4a5568'};
           border: none;
-          border-radius: 15px;
+          border-radius: 20px;
           font-size: 0.85em;
           font-weight: 600;
           cursor: pointer;
           white-space: nowrap;
+          transition: all 0.15s ease;
         ">${g}</button>
       `;
     }).join('');
   }
 
-  // Filtrar solo los productos del grupo actual
+  // Filtrar productos del grupo seleccionado
   const filtrados = todosLosProductos.filter(p => p.categoria === grupoSeleccionado);
 
-  // Armar lista fina, compacta y elegante
+  // Armar lista fina elegante tipo menú gourmet
   let html = "";
   filtrados.forEach(p => {
     html += `
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-bottom: 1px solid #f7f9fa; font-size: 0.9em; gap: 8px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #f8fafc; font-size: 0.92em; gap: 10px;">
         
-        <!-- Nombre y Medida -->
-        <div style="flex: 2; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-          <b style="color: #2d3748;">${p.producto}</b>
-          <span style="color: #a0aec0; font-size: 0.8em; margin-left: 2px;">(${p.medida.toLowerCase()})</span>
+        <!-- Nombre y Presentación del Producto -->
+        <div style="flex: 2; text-align: left;">
+          <b style="color: #1a202c; display: block; font-weight: 600;">${p.producto}</b>
+          <span style="color: #718096; font-size: 0.8em;">Presentación: ${p.medida.toLowerCase()}</span>
         </div>
         
-        <!-- Notas Cortas y Cantidad en una Línea -->
+        <!-- Entradas del Pedido (Nota Fina + Cantidad) -->
         <div style="flex: 3; display: flex; align-items: center; gap: 6px; justify-content: flex-end;">
-          <input type="text" placeholder="Nota (verde, pinto...)" value="${p.nota}" 
+          <input type="text" placeholder="Nota: maduro, pinto..." value="${p.nota}" 
             oninput="guardarNota(${p.id}, this.value)" 
-            style="width: 100%; max-width: 140px; padding: 4px 6px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.8em; color: #4a5568; background: #fcfdfd; outline: none;">
+            style="width: 100%; max-width: 150px; padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.8em; color: #4a5568; background: #f8fafc; outline: none; border-style: solid;">
           
           <input type="number" min="0" placeholder="0" value="${p.cantidad || ''}" 
             oninput="guardarCantidad(${p.id}, this.value)" 
-            style="width: 40px; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.85em; font-weight: bold; color: #2d3748; outline: none;">
+            style="width: 40px; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.88em; font-weight: bold; color: #1a202c; outline: none; border-style: solid;">
         </div>
 
-        <!-- Precio Neto -->
-        <div style="min-width: 60px; text-align: right; font-weight: 600; color: #27AE60;">
+        <!-- Precio Unitario en Verde -->
+        <div style="min-width: 65px; text-align: right; font-weight: 700; color: #27AE60;">
           S/. ${p.precio.toFixed(2)}
         </div>
 
@@ -142,7 +146,7 @@ function guardarNota(id, val) {
   if (p) p.nota = val.trim();
 }
 
-// 3. Crear el botón elegante flotante de WhatsApp
+// 3. Botón Premium Flotante de WhatsApp para despachar pedidos
 function crearBotonWhatsApp() {
   if (document.getElementById('btn-whatsapp-tgi')) return;
 
@@ -154,16 +158,13 @@ function crearBotonWhatsApp() {
     right: 20px;
     background: #1E8449;
     color: white;
-    padding: 10px 20px;
+    padding: 11px 22px;
     border-radius: 30px;
-    font-size: 0.9em;
+    font-size: 0.92em;
     font-weight: bold;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(30,132,73,0.3);
     cursor: pointer;
     z-index: 99999;
-    display: flex;
-    align-items: center;
-    gap: 6px;
   `;
   btn.innerHTML = `🛒 Enviar Pedido (S/. 0.00)`;
   btn.onclick = enviarWhatsApp;
@@ -177,15 +178,16 @@ function actualizarSumaBoton() {
   if (btn) btn.innerHTML = `🛒 Enviar Pedido (S/. ${t.toFixed(2)})`;
 }
 
-// 4. Despachar el texto ordenado a WhatsApp
+// 4. Redirección directa al WhatsApp del Cliente con su Pedido Armado
 function enviarWhatsApp() {
   const pedido = todosLosProductos.filter(p => p.cantidad > 0);
   if (pedido.length === 0) {
-    alert("Por favor, pon una cantidad antes de enviar.");
+    alert("Por favor, selecciona al menos un producto antes de enviar tu orden.");
     return;
   }
   
-  let m = "🛒 *NUEVO PEDIDO - DISTRIBUIDORA TGI*\n\n";
+  let m = "🛒 *NUEVO PEDIDO - DISTRIBUIDORA TGI*\n";
+  m += "===============================\n\n";
   let total = 0;
   
   pedido.forEach((p, index) => {
@@ -197,10 +199,11 @@ function enviarWhatsApp() {
     m += `---------------------------\n`;
   });
   
-  m += `\n💰 *TOTAL ESTIMADO: S/. ${total.toFixed(2)}*`;
+  m += `\n💰 *TOTAL ESTIMADO A PAGAR: S/. ${total.toFixed(2)}*`;
   
   window.open(`https://whatsapp.com{NÚMERO_WHATSAPP}&text=${encodeURIComponent(m)}`, '_blank');
 }
 
-window.addEventListener('DOMContentLoaded', cargarWebMatriz);
+// Inicializar la carga segura
+cargarWebMatriz();
 </script>
