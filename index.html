@@ -1,14 +1,12 @@
-<!-- SISTEMA PREMIUM ULTRA VELOZ DISTRIBUIDORA TGI -->
+<!-- SISTEMA PREMIUM DISTRIBUIDORA TGI - LÓGICA DE PRECIOS ENTERO / FRACCIÓN -->
 <div id="tgi-bloque-sistema" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 650px; margin: 0 auto; padding: 10px; background: #ffffff;">
   
   <!-- BARRA DE PESTAÑAS INDEPENDIENTES -->
-  <div id="tgi-pestañas" style="display: flex; gap: 8px; overflow-x: auto; padding: 8px 0; margin-bottom: 15px; border-bottom: 2px solid #f7f9fa; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
-    <!-- Se generan solas aquí -->
-  </div>
+  <div id="tgi-pestañas" style="display: flex; gap: 8px; overflow-x: auto; padding: 8px 0; margin-bottom: 15px; border-bottom: 2px solid #f7f9fa; -webkit-overflow-scrolling: touch; scrollbar-width: none;"></div>
 
   <!-- SECCIÓN DE PRODUCTOS COMPACTA -->
   <div id="contenedor-productos" style="display: flex; flex-direction: column; gap: 5px;">
-    <p style="text-align: center; color: #999; font-size: 0.95em; padding: 30px;">Conectando de forma segura con la lista...</p>
+    <p style="text-align: center; color: #999; font-size: 0.95em; padding: 30px;">Conectando con la matriz comercial...</p>
   </div>
 </div>
 
@@ -17,16 +15,15 @@ let todosLosProductos = [];
 let grupoSeleccionado = "";
 const NÚMERO_WHATSAPP = "51917764281";
 
-// 1. Descarga veloz usando la API pública de Google (Evita bloqueos de GitHub)
+// 1. Descarga desde la API de Google Sheets leyendo columna F (Entero) y L (Fracción)
 function cargarWebMatriz() {
-  // ID de tu documento unificado WEB MATRIZ
- const urlJSON = "https://google.com";
-
+  // Solicitamos las columnas A(Categoría), B(Producto), C(Medida), F(Precio Entero), L(Precio Fracción)
+  const spreadsheetId = "1vRbPkbgiCxe2RMmyLOrObjSI7yG6u9sszjPvC0BM8mKb3S4Q_lhZLqAaOdAhFW6glpChhoWvdYpHan7";
+  const urlJSON = `https://google.com{spreadsheetId}/gviz/tq?tqx=out:json&tq=SELECT+A,B,C,F,L&gid=1523459015`;
 
   fetch(urlJSON)
     .then(res => res.text())
     .then(texto => {
-      // Limpar el formato JSON que devuelve Google
       const jsonLimpio = JSON.parse(texto.substring(47, texto.length - 2));
       const filas = jsonLimpio.table.rows;
       
@@ -34,14 +31,14 @@ function cargarWebMatriz() {
       
       filas.forEach((fila, index) => {
         const c = fila.c;
-        // Validar que las celdas tengan contenido real
-        if (c[0] && c[1] && c[3]) {
+        if (c && c && c) {
           todosLosProductos.push({
             id: index,
-            categoria: c[0].v.toString().trim(), // Columna A
-            producto: c[1].v.toString().trim(),  // Columna B
-            medida: c[2] ? c[2].v.toString().trim() : "unid", // Columna C
-            precio: parseFloat(c[3].v) || 0,     // Columna F
+            categoria: c[0].v.toString().trim(), 
+            producto: c[1].v.toString().trim(),  
+            medida: c[2] ? c[2].v.toString().trim() : "unid", 
+            precioEntero: parseFloat(c[3] ? c[3].v : 0) || 0,   // Columna F
+            precioFraccion: parseFloat(c[4] ? c[4].v : 0) || 0, // Columna L
             cantidad: 0,
             nota: ""
           });
@@ -56,20 +53,18 @@ function cargarWebMatriz() {
       crearBotonWhatsApp();
     })
     .catch(err => {
-      document.getElementById('contenedor-productos').innerHTML = "<p style='text-align:center; color:#c0392b; font-size:0.9em; padding:20px;'>⚠️ Error al sincronizar con Google Sheets. Verifica la conexión.</p>";
+      document.getElementById('contenedor-productos').innerHTML = "<p style='text-align:center; color:#c0392b;'>⚠️ Error al sincronizar con Google Sheets.</p>";
     });
 }
 
-// 2. Pintar el catálogo hiper-compacto y fino
+// 2. Pintar el catálogo limpio
 function reconstruirPantalla() {
   const divPestañas = document.getElementById('tgi-pestañas');
   const divProductos = document.getElementById('contenedor-productos');
   if (!divProductos) return;
 
-  // Extraer nombres de grupos sin repetir
   const grupos = [...new Set(todosLosProductos.map(p => p.categoria))];
 
-  // Renderizar los botones redondeados de pestañas superiores
   if (divPestañas) {
     divPestañas.innerHTML = grupos.map(g => {
       const activo = g === grupoSeleccionado;
@@ -84,41 +79,40 @@ function reconstruirPantalla() {
           font-weight: 600;
           cursor: pointer;
           white-space: nowrap;
-          transition: all 0.15s ease;
         ">${g}</button>
       `;
     }).join('');
   }
 
-  // Filtrar productos del grupo seleccionado
   const filtrados = todosLosProductos.filter(p => p.categoria === grupoSeleccionado);
 
-  // Armar lista fina elegante tipo menú gourmet
   let html = "";
   filtrados.forEach(p => {
+    // Si el producto no tiene precio de fracción en el Excel (está en 0), se muestra solo el precio entero
+    const textoPrecio = p.precioFraccion > 0 
+      ? `E: S/. ${p.precioEntero.toFixed(2)}<br><small style="color:#718096;font-weight:400;">F: S/. ${p.precioFraccion.toFixed(2)}</small>`
+      : `S/. ${p.precioEntero.toFixed(2)}`;
+
     html += `
       <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #f8fafc; font-size: 0.92em; gap: 10px;">
         
-        <!-- Nombre y Presentación del Producto -->
         <div style="flex: 2; text-align: left;">
           <b style="color: #1a202c; display: block; font-weight: 600;">${p.producto}</b>
           <span style="color: #718096; font-size: 0.8em;">Presentación: ${p.medida.toLowerCase()}</span>
         </div>
         
-        <!-- Entradas del Pedido (Nota Fina + Cantidad) -->
         <div style="flex: 3; display: flex; align-items: center; gap: 6px; justify-content: flex-end;">
           <input type="text" placeholder="Nota: maduro, pinto..." value="${p.nota}" 
             oninput="guardarNota(${p.id}, this.value)" 
-            style="width: 100%; max-width: 150px; padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.8em; color: #4a5568; background: #f8fafc; outline: none; border-style: solid;">
+            style="width: 100%; max-width: 140px; padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.8em; color: #4a5568; background: #f8fafc; outline: none; border-style: solid;">
           
-          <input type="number" min="0" placeholder="0" value="${p.cantidad || ''}" 
+          <input type="number" min="0" step="any" placeholder="0" value="${p.cantidad || ''}" 
             oninput="guardarCantidad(${p.id}, this.value)" 
-            style="width: 40px; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.88em; font-weight: bold; color: #1a202c; outline: none; border-style: solid;">
+            style="width: 55px; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.88em; font-weight: bold; color: #1a202c; outline: none; border-style: solid;">
         </div>
 
-        <!-- Precio Unitario en Verde -->
-        <div style="min-width: 65px; text-align: right; font-weight: 700; color: #27AE60;">
-          S/. ${p.precio.toFixed(2)}
+        <div style="min-width: 85px; text-align: right; font-weight: 700; color: #27AE60; line-height: 1.2;">
+          ${textoPrecio}
         </div>
 
       </div>
@@ -146,7 +140,29 @@ function guardarNota(id, val) {
   if (p) p.nota = val.trim();
 }
 
-// 3. Botón Premium Flotante de WhatsApp para despachar pedidos
+// 3. Función matemática inteligente: Separa Enteros y Fracciones
+function calcularSubtotalProducto(p) {
+  if (p.cantidad <= 0) return 0;
+
+  // Si el producto no tiene precio de fracción configurado, calcula todo con precio entero
+  if (p.precioFraccion === 0) {
+    return p.cantidad * p.precioEntero;
+  }
+
+  // Separar la cantidad en parte entera y parte decimal (Fracción)
+  const parteEntera = Math.floor(p.cantidad); 
+  const parteFraccion = p.cantidad - parteEntera; 
+
+  // LÓGICA DE COBRO:
+  // Parte entera se multiplica por PRECIO ENTERO
+  // Parte decimal se multiplica por PRECIO FRACCIÓN (calculado proporcionalmente si es 0.5 o similar)
+  // Nota: Si la regla es que "0.5" equivale exactamente al costo de la columna L, multiplicamos la fracción basada en una escala de 0.5.
+  const costoEntero = parteEntera * p.precioEntero;
+  const costoFraccion = (parteFraccion / 0.5) * p.precioFraccion; 
+
+  return costoEntero + costoFraccion;
+}
+
 function crearBotonWhatsApp() {
   if (document.getElementById('btn-whatsapp-tgi')) return;
 
@@ -173,12 +189,14 @@ function crearBotonWhatsApp() {
 
 function actualizarSumaBoton() {
   let t = 0;
-  todosLosProductos.forEach(p => t += p.cantidad * p.precio);
+  todosLosProductos.forEach(p => {
+    t += calcularSubtotalProducto(p);
+  });
   const btn = document.getElementById('btn-whatsapp-tgi');
   if (btn) btn.innerHTML = `🛒 Enviar Pedido (S/. ${t.toFixed(2)})`;
 }
 
-// 4. Redirección directa al WhatsApp del Cliente con su Pedido Armado
+// 4. Enviar el pedido desglosado correctamente a WhatsApp
 function enviarWhatsApp() {
   const pedido = todosLosProductos.filter(p => p.cantidad > 0);
   if (pedido.length === 0) {
@@ -188,22 +206,23 @@ function enviarWhatsApp() {
   
   let m = "🛒 *NUEVO PEDIDO - DISTRIBUIDORA TGI*\n";
   m += "===============================\n\n";
-  let total = 0;
+  let totalGeneral = 0;
   
   pedido.forEach((p, index) => {
-    const sub = p.cantidad * p.precio;
-    total += sub;
+    const subtotal = calcularSubtotalProducto(p);
+    totalGeneral += subtotal;
+    
     m += `*${index + 1}. ${p.producto}* (${p.medida.toLowerCase()})\n`;
-    m += `   Cant: *${p.cantidad}* x S/. ${p.precio.toFixed(2)} = S/. ${sub.toFixed(2)}\n`;
+    m += `   Cant. Solicitada: *${p.cantidad}*\n`;
+    m += `   Subtotal: *S/. ${subtotal.toFixed(2)}*\n`;
     if (p.nota) m += `   📝 _Nota: ${p.nota}_\n`;
     m += `---------------------------\n`;
   });
   
-  m += `\n💰 *TOTAL ESTIMADO A PAGAR: S/. ${total.toFixed(2)}*`;
+  m += `\n💰 *TOTAL REAL ESTIMADO: S/. ${totalGeneral.toFixed(2)}*`;
   
   window.open(`https://whatsapp.com{NÚMERO_WHATSAPP}&text=${encodeURIComponent(m)}`, '_blank');
 }
 
-// Inicializar la carga segura
 cargarWebMatriz();
 </script>
