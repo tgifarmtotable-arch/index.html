@@ -15,9 +15,30 @@ let todosLosProductos = [];
 let grupoSeleccionado = "";
 const NÚMERO_WHATSAPP = "51917764281";
 
+// Lector inteligente de filas CSV (evita errores si hay comas dentro de los textos)
+function dividirFilaCSV(textoFila) {
+  const resultado = [];
+  let dentroDeComillas = false;
+  let celdaActual = "";
+
+  for (let i = 0; i < textoFila.length; i++) {
+    let char = textoFila[i];
+    if (char === '"') {
+      dentroDeComillas = !dentroDeComillas;
+    } else if (char === ',' && !dentroDeComillas) {
+      resultado.push(celdaActual.trim());
+      celdaActual = "";
+    } else {
+      celdaActual += char;
+    }
+  }
+  resultado.push(celdaActual.trim());
+  return resultado;
+}
+
 // 1. Descarga directa en CSV compatible al 100% con GitHub Pages
 async function cargarWebMatriz() {
-  const urlCSV = "https://google.com";
+  const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbPkbgiCxe2RMmyLOrObjSI7yG6u9sszjPvC0BM8mKb3S4Q_lhZLqAaOdAhFW6glpChhoWvdYpHan7/pub?gid=1523459015&single=true&output=csv";
   
   try {
     const respuesta = await fetch(urlCSV);
@@ -30,15 +51,16 @@ async function cargarWebMatriz() {
     for (let i = 1; i < lineas.length; i++) {
       if (!lineas[i].trim()) continue;
       
-      // Separar las columnas del Excel respetando el texto con comillas
-      const celdas = lineas[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+      // Procesar la fila de forma segura
+      const celdas = dividirFilaCSV(lineas[i]);
       
-      if (celdas.length >= 12) {
+      // Verificamos que tenga la cantidad mínima de columnas requeridas en tu WEB MATRIZ
+      if (celdas.length >= 6) {
         todosLosProductos.push({
           id: i,
-          categoria: celdas[0], // Columna A
-          producto: celdas[1],  // Columna B
-          medida: celdas[2],     // Columna C
+          categoria: celdas[0], // Columna A (Categoría)
+          producto: celdas[1],  // Columna B (Producto)
+          medida: celdas[2] ? celdas[2] : "unid", // Columna C (Medida)
           precioEntero: parseFloat(celdas[5]) || 0,   // Columna F (Precio Entero)
           precioFraccion: parseFloat(celdas[11]) || 0, // Columna L (Precio Fracción)
           cantidad: 0,
@@ -146,17 +168,14 @@ function guardarNota(id, val) {
 function calcularSubtotalProducto(p) {
   if (p.cantidad <= 0) return 0;
 
-  // Si no hay precio de fracción, calcula todo al precio normal de entero
   if (p.precioFraccion === 0) {
     return p.cantidad * p.precioEntero;
   }
 
-  // Desglosar la cantidad ingresada (ejemplo: 1.5 -> parte entera = 1, fracción = 0.5)
   const parteEntera = Math.floor(p.cantidad); 
   const parteFraccion = p.cantidad - parteEntera; 
 
   const costoEntero = parteEntera * p.precioEntero;
-  // Multiplica la fracción asumiendo que 0.5 equivale al valor de la columna L
   const costoFraccion = (parteFraccion / 0.5) * p.precioFraccion; 
 
   return costoEntero + costoFraccion;
