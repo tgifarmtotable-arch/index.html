@@ -10,30 +10,31 @@
     <!-- CONTENEDOR MINIMALISTA PREMIUM -->
     <div style="max-width: 550px; margin: 0 auto; padding: 20px 15px; background: #ffffff; min-height: 100vh; box-sizing: border-box; position: relative;">
         
-        <!-- CABECERA -->
+        <!-- CABECERA DE LA TIENDA -->
         <div style="text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9;">
             <h1 style="font-size: 1.6em; color: #1E8449; margin: 0 0 4px 0; font-weight: 700; letter-spacing: 0.5px;">DISTRIBUIDORA TGI</h1>
             <p style="font-size: 0.85em; color: #64748b; margin: 0; font-weight: 500;">Tu mercado fresco a un clic de distancia</p>
         </div>
 
-        <!-- PESTAÑAS HORIZONTALES AUTOMÁTICAS -->
-        <div id="tgi-pestañas" style="display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 12px 2px; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; scrollbar-width: none; -webkit-overflow-scrolling: touch;">
-            <!-- Se generan solas -->
+        <!-- MENU DE GRUPOS -->
+        <div style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+            <button onclick="cambiarGrupo('VERDURAS FRESCAS')" id="btn-verduras" style="padding: 8px 16px; background: #1E8449; color: white; border: none; border-radius: 20px; font-weight: 600; font-size: 0.85em; cursor: pointer;">🥦 VERDURAS FRESCAS</button>
+            <button onclick="cambiarGrupo('FRUTAS SELECTAS')" id="btn-frutas" style="padding: 8px 16px; background: #f1f5f9; color: #475569; border: none; border-radius: 20px; font-weight: 600; font-size: 0.85em; cursor: pointer;">🍓 FRUTAS SELECTAS</button>
         </div>
 
-        <!-- LISTADO DE PRODUCTOS ULTRA COMPACTO -->
-        <div id="contenedor-productos" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 100px;">
-            <p style="text-align: center; color: #94a3b8; font-size: 0.9em; padding: 40px 0;">Sincronizando catálogo con la WEB MATRIZ...</p>
+        <!-- LISTADO DE PRODUCTOS ULTRACOMPACTO -->
+        <div id="contenedor-productos" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 110px;">
+            <!-- Los productos se pintan aquí al instante -->
         </div>
 
-        <!-- BARRA INFERIOR DE RESUMEN FIJA (Elegante y no estorba) -->
-        <div id="barra-resumen" style="position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 550px; background: #ffffff; box-shadow: 0 -4px 20px rgba(0,0,0,0.06); padding: 12px 20px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; z-index: 9999;">
+        <!-- BARRA INFERIOR DE COSTOS FIJA -->
+        <div style="position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 550px; background: #ffffff; box-shadow: 0 -4px 20px rgba(0,0,0,0.06); padding: 12px 20px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; z-index: 9999;">
             <div style="text-align: left; line-height: 1.3;">
-                <span style="font-size: 0.8em; color: #64748b; font-weight: 600; display: block;" id="txt-peso-total">Kilos: 0.00 kg</span>
+                <span style="font-size: 0.8em; color: #64748b; font-weight: 600; display: block;" id="txt-peso">Kilos: 0.00 kg</span>
                 <span style="font-size: 0.8em; color: #64748b; font-weight: 600; display: block;" id="txt-delivery">Delivery: S/. 0.00</span>
-                <span style="font-size: 1.1em; font-weight: 700; color: #1e293b;">Total: <span id="txt-total-general" style="color: #27AE60;">S/. 0.00</span></span>
+                <span style="font-size: 1.1em; font-weight: 700; color: #1e293b;">Total: <span id="txt-total" style="color: #27AE60;">S/. 0.00</span></span>
             </div>
-            <button onclick="enviarWhatsApp()" style="background: #1E8449; color: #ffffff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 0.95em; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(30,132,73,0.25);">
+            <button onclick="enviarWhatsApp()" style="background: #1E8449; color: #ffffff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 0.95em; cursor: pointer;">
                 Pedir por WhatsApp ➔
             </button>
         </div>
@@ -41,175 +42,114 @@
     </div>
 
     <script>
-    let todosLosProductos = [];
-    let grupoSeleccionado = "";
     const NÚMERO_WHATSAPP = "51917764281";
+    let grupoActivo = "VERDURAS FRESCAS";
 
-    // Lector seguro de CSV para saltar las restricciones de red de GitHub Pages
-    function separarCamposCSV(textoFila) {
-        const celdas = [];
-        let enComillas = false;
-        let acumulador = "";
-        for (let i = 0; i < textoFila.length; i++) {
-            let char = textoFila[i];
-            if (char === '"') { enComillas = !enComillas; }
-            else if (char === ',' && !enComillas) { celdas.push(acumulador.trim()); acumulador = ""; }
-            else { acumulador += char; }
-        }
-        celdas.push(acumulador.trim());
-        return celdas;
-    }
-
-    // 1. Descarga automática de la lista comercial
-    async function cargarWebMatriz() {
-      const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbPkbgiCxe2RMmyLOrObjSI7yG6u9sszjPvC0BM8mKb3S4Q_lhZLqAaOdAhFW6glpChhoWvdYpHan7/pub?gid=1523459015&single=true&output=csv";
-      
-      try {
-        const res = await fetch(urlCSV);
-        const cuerpo = await res.text();
-        const lineas = cuerpo.split(/\r?\n/);
+    // Base de datos integrada directamente para asegurar velocidad y estabilidad absoluta
+    const productosTGI = [
+        // VERDURAS FRESCAS
+        { cat: "VERDURAS FRESCAS", name: "ACELGA", med: "ATADO", pEntero: 5.00, pFrac: 0 },
+        { cat: "VERDURAS FRESCAS", name: "AJI AMARILLO", med: "KILO", pEntero: 8.00, pFrac: 4.25 },
+        { cat: "VERDURAS FRESCAS", name: "AJI CHARAPITA", med: "TAPER", pEntero: 4.00, pFrac: 0 },
+        { cat: "VERDURAS FRESCAS", name: "AJI LIMO", med: "KILO", pEntero: 7.50, pFrac: 4.00 },
+        { cat: "VERDURAS FRESCAS", name: "AJO ENTERO", med: "KILO", pEntero: 9.50, pFrac: 5.00 },
+        { cat: "VERDURAS FRESCAS", name: "AJO ENTERO EXTRA", med: "KILO", pEntero: 15.50, pFrac: 8.00 },
+        { cat: "VERDURAS FRESCAS", name: "ALCACHOFA", med: "UNIDAD", pEntero: 3.50, pFrac: 0 },
+        { cat: "VERDURAS FRESCAS", name: "ALVERJON", med: "KILO", pEntero: 9.50, pFrac: 5.00 },
+        { cat: "VERDURAS FRESCAS", name: "ARVERJA", med: "UNIDAD", pEntero: 8.50, pFrac: 4.50 },
+        { cat: "VERDURAS FRESCAS", name: "BROCOLI", med: "KILO", pEntero: 5.50, pFrac: 0 },
+        { cat: "VERDURAS FRESCAS", name: "CAMOTE AMARILLO", med: "KILO", pEntero: 3.10, pFrac: 0 },
+        { cat: "VERDURAS FRESCAS", name: "CEBOLLA BLANCA", med: "KILO", pEntero: 3.50, pFrac: 0 },
+        { cat: "VERDURAS FRESCAS", name: "CHOCLO GRANDE", med: "5U", pEntero: 13.50, pFrac: 0 },
+        { cat: "VERDURAS FRESCAS", name: "ESPINACA", med: "KILO", pEntero: 4.00, pFrac: 2.50 },
+        { cat: "VERDURAS FRESCAS", name: "KION", med: "KILO", pEntero: 4.50, pFrac: 2.50 },
+        { cat: "VERDURAS FRESCAS", name: "TOMATE EXTRA", med: "KILO", pEntero: 7.50, pFrac: 0 },
+        { cat: "VERDURAS FRESCAS", name: "YUCA", med: "KILO", pEntero: 3.20, pFrac: 0 },
+        { cat: "VERDURAS FRESCAS", name: "ZANAHORIA SELECTA", med: "KILO", pEntero: 3.30, pFrac: 0 },
         
-        todosLosProductos = [];
+        // FRUTAS SELECTAS
+        { cat: "FRUTAS SELECTAS", name: "AGUAYMANTO", med: "KILO", pEntero: 8.00, pFrac: 4.50 },
+        { cat: "FRUTAS SELECTAS", name: "ARANDANO", med: "KILO", pEntero: 24.00, pFrac: 12.00 },
+        { cat: "FRUTAS SELECTAS", name: "FRESA SELECTA", med: "KILO", pEntero: 11.00, pFrac: 6.00 },
+        { cat: "FRUTAS SELECTAS", name: "GRANADILLA", med: "KILO", pEntero: 7.50, pFrac: 0 },
+        { cat: "FRUTAS SELECTAS", name: "KIWI", med: "KILO", pEntero: 16.50, pFrac: 0 },
+        { cat: "FRUTAS SELECTAS", name: "MANDARINA", med: "KILO", pEntero: 4.00, pFrac: 0 },
+        { cat: "FRUTAS SELECTAS", name: "MANGO EDWARD", med: "KILO", pEntero: 8.00, pFrac: 0 },
+        { cat: "FRUTAS SELECTAS", name: "PALTA FUERTE", med: "KILO", pEntero: 9.50, pFrac: 0 },
+        { cat: "FRUTAS SELECTAS", name: "PAPAYA", med: "KILO", pEntero: 6.00, pFrac: 0 },
+        { cat: "FRUTAS SELECTAS", name: "PIÑA GOLDEN GRANDE", med: "KILO", pEntero: 7.00, pFrac: 0 },
+        { cat: "FRUTAS SELECTAS", name: "PLATANO ISLA", med: "KILO", pEntero: 4.50, pFrac: 0 },
+        { cat: "FRUTAS SELECTAS", name: "SANDIA", med: "KILO", pEntero: 2.50, pFrac: 0 }
+    ];
+
+    // Añadir cajas de memoria para cantidades y notas
+    productosTGI.forEach((p, i) => { p.id = i; p.cant = 0; p.nota = ""; });
+
+    // Pintar la pantalla de inmediato
+    function pintarCatalogo() {
+        const div = document.getElementById('contenedor-productos');
+        const filtrados = productosTGI.filter(p => p.cat === grupoActivo);
         
-        for (let i = 1; i < lineas.length; i++) {
-          if (!lineas[i].trim()) continue;
-          
-          const columnas = separarCamposCSV(lineas[i]);
-          
-          if (columnas.length >= 12) {
-            todosLosProductos.push({
-              id: i,
-              categoria: columnas[0], // Columna A
-              producto: columnas[1],  // Columna B
-              medida: columnas[2] ? columnas[2].toUpperCase() : "KILO", // Columna C
-              precioEntero: parseFloat(columnas[5]) || 0,   // Columna F
-              precioFraccion: parseFloat(columnas[11]) || 0, // Columna L
-              cantidad: 0,
-              nota: ""
-            });
-          }
-        }
+        let html = "";
+        filtrados.forEach(p => {
+            const muestraPrecio = p.pFrac > 0 
+                ? `<span style="font-weight:700; color:#1E8449;">S/. ${p.pEntero.toFixed(2)}</span><br><span style="font-size:0.75em; color:#7f8c8d;">½: S/. ${p.pFrac.toFixed(2)}</span>`
+                : `<span style="font-weight:700; color:#1E8449;">S/. ${p.pEntero.toFixed(2)}</span>`;
 
-        if (todosLosProductos.length > 0) {
-          grupoSeleccionado = todosLosProductos[0].categoria;
-        }
-        
-        reconstruirPantalla();
-      } catch (err) {
-        document.getElementById('contenedor-productos').innerHTML = "<p style='text-align:center; color:#ef4444; font-size:0.9em; padding:20px;'>⚠️ Error de sincronización. Comprueba que el Excel esté publicado.</p>";
-      }
+            html += `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 6px; border-bottom: 1px solid #f1f5f9; font-size: 0.9em; gap: 10px; background: #fff;">
+                    <div style="flex: 2; text-align: left;">
+                        <b style="color: #1e293b; font-size: 0.92em; display: block; line-height:1.2;">${p.name}</b>
+                        <span style="color: #94a3b8; font-size: 0.75em;">Medida: ${p.med}</span>
+                    </div>
+                    <div style="flex: 3; display: flex; align-items: center; gap: 6px; justify-content: flex-end;">
+                        <input type="text" placeholder="Nota: verde, pinto..." value="${p.nota}" oninput="cambiarNota(${p.id}, this.value)" style="width: 100%; max-width: 125px; padding: 5px 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.8em; outline: none; background: #f8fafc;">
+                        <input type="number" min="0" step="any" placeholder="0" value="${p.cant || ''}" oninput="cambiarCantidad(${p.id}, this.value)" style="width: 48px; padding: 5px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center; font-size: 0.88em; font-weight: bold; outline: none;">
+                    </div>
+                    <div style="min-width: 75px; text-align: right; line-height: 1.1;">
+                        ${muestraPrecio}
+                    </div>
+                </div>
+            `;
+        });
+        div.innerHTML = html;
     }
 
-    // 2. Dibujar pantalla compacta premium
-    function reconstruirPantalla() {
-      const divPestañas = document.getElementById('tgi-pestañas');
-      const divProductos = document.getElementById('contenedor-productos');
-      if (!divProductos) return;
-
-      const gruposUnicos = [...new Set(todosLosProductos.map(p => p.categoria))];
-
-      if (divPestañas) {
-        divPestañas.innerHTML = gruposUnicos.map(g => {
-          const esActivo = g === grupoSeleccionado;
-          return `
-            <button onclick="cambiarDeGrupo('${g}')" style="
-              padding: 6px 14px;
-              background: ${esActivo ? '#1E8449' : '#f1f5f9'};
-              color: ${esActivo ? '#ffffff' : '#475569'};
-              border: none;
-              border-radius: 20px;
-              font-size: 0.82em;
-              font-weight: 600;
-              cursor: pointer;
-              white-space: nowrap;
-            ">${g}</button>
-          `;
-        }).join('');
-      }
-
-      const listaProductosGrupo = todosLosProductos.filter(p => p.categoria === grupoSeleccionado);
-
-      let html = "";
-      listaProductosGrupo.forEach(p => {
-        const visualPrecio = p.precioFraccion > 0 
-          ? `<span style="font-weight:700; color:#1E8449; font-size:0.92em;">S/. ${p.precioEntero.toFixed(2)}</span><br><span style="font-size:0.75em; color:#64748b;">½: S/. ${p.precioFraccion.toFixed(2)}</span>`
-          : `<span style="font-weight:700; color:#1E8449; font-size:0.92em;">S/. ${p.precioEntero.toFixed(2)}</span>`;
-
-        html += `
-          <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 6px; border-bottom: 1px solid #f1f5f9; font-size: 0.9em; gap: 10px; background: #fff;">
-            
-            <div style="flex: 2; text-align: left;">
-              <b style="color: #1e293b; font-size: 0.92em; display: block; line-height:1.2;">${p.producto}</b>
-              <span style="color: #94a3b8; font-size: 0.75em; font-weight: 500;">Medida: ${p.medida}</span>
-            </div>
-            
-            <div style="flex: 3; display: flex; align-items: center; gap: 6px; justify-content: flex-end;">
-              <input type="text" placeholder="Nota: pinto, verde..." value="${p.nota}" 
-                oninput="guardarNota(${p.id}, this.value)" 
-                style="width: 100%; max-width: 125px; padding: 5px 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.8em; color: #334155; background: #f8fafc; outline: none;">
-              
-              <input type="number" min="0" step="any" placeholder="0" value="${p.cantidad || ''}" 
-                oninput="guardarCantidad(${p.id}, this.value)" 
-                style="width: 48px; padding: 5px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center; font-size: 0.88em; font-weight: bold; color: #1e293b; outline: none;">
-            </div>
-
-            <div style="min-width: 75px; text-align: right; line-height: 1.1;">
-              ${visualPrecio}
-            </div>
-
-          </div>
-        `;
-      });
-
-      divProductos.innerHTML = html;
+    function cambiarGrupo(grupo) {
+        grupoActivo = grupo;
+        document.getElementById('btn-verduras').style.background = grupo === 'VERDURAS FRESCAS' ? '#1E8449' : '#f1f5f9';
+        document.getElementById('btn-verduras').style.color = grupo === 'VERDURAS FRESCAS' ? 'white' : '#475569';
+        document.getElementById('btn-frutas').style.background = grupo === 'FRUTAS SELECTAS' ? '#1E8449' : '#f1f5f9';
+        document.getElementById('btn-frutas').style.color = grupo === 'FRUTAS SELECTAS' ? 'white' : '#475569';
+        pintarCatalogo();
     }
 
-    function cambiarDeGrupo(nombre) {
-      grupoSeleccionado = nombre;
-      reconstruirPantalla();
+    function cambiarCantidad(id, val) {
+        productosTGI[id].cant = parseFloat(val) || 0;
+        recalcularValores();
     }
 
-    function guardarCantidad(id, val) {
-      const p = todosLosProductos.find(prod => prod.id === id);
-      if (p) {
-        p.cantidad = parseFloat(val) || 0;
-        calcularTotalesFlotantes();
-      }
+    function cambiarNota(id, val) {
+        productosTGI[id].nota = val.trim();
     }
 
-    function guardarNota(id, val) {
-      const p = todosLosProductos.find(prod => prod.id === id);
-      if (p) p.nota = val.trim();
+    // Lógica matemática comercial (Entero vs Fracción de tu cuadro unificado)
+    function calcularSubtotal(p) {
+        if (p.cant <= 0) return 0;
+        if (p.pFrac === 0) return p.cant * p.pEntero;
+
+        const enteros = Math.floor(p.cant);
+        const fraccion = p.cant - enteros;
+
+        const costoEntero = enteros * p.pEntero;
+        const costoFraccion = (fraccion / 0.5) * p.pFrac;
+
+        return costoEntero + costoFraccion;
     }
 
-    // 3. Lógica matemática de Cobro Comercial (Entero / Fracción)
-    function calcularSubtotalProducto(p) {
-      if (p.cantidad <= 0) return 0;
-      if (p.precioFraccion === 0) return p.cantidad * p.precioEntero;
+    // Regla de Delivery por peso
+    function recalcularValores() {
+        let totalProductos = 0;
+        let kilosTotales = 0;
 
-      const parteEntera = Math.floor(p.cantidad); 
-      const parteFraccion = p.cantidad - parteEntera; 
-
-      const costoEntero = parteEntera * p.precioEntero;
-      const costoFraccion = (parteFraccion / 0.5) * p.precioFraccion; 
-
-      return costoEntero + costoFraccion;
-    }
-
-    // 4. Calcular pesos y tarifas de delivery en tiempo real
-    function calcularTotalesFlotantes() {
-      let subtotalProductos = 0;
-      let pesoTotalKilos = 0;
-
-      todosLosProductos.forEach(p => {
-        subtotalProductos += calcularSubtotalProducto(p);
-        // Sumar peso solo si la medida del producto se vende por KILO o KG
-        if (p.cantidad > 0 && (p.medida === "KILO" || p.medida === "KG")) {
-            pesoTotalKilos += p.cantidad;
-        }
-      });
-
-      // Regla de negocio del Delivery:
-      let costoDelivery = 0;
-      if (pesoTotalKilos > 0 && pesoTotalKilos <= 6) {
-          costoDelivery = 4.99;
+        productosTGI.forEach(p => {
