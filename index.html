@@ -1,177 +1,180 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedidos por Grupos - TGI</title>
-    <style>
-        :root { --verde-tgi: #1b5e20; --accent: #2e7d32; --gris: #f8f9fa; }
-        body { font-family: system-ui, -apple-system, sans-serif; margin:0; padding:0; background: var(--gris); color: #222; padding-bottom: 140px; }
-        header { background: var(--verde-tgi); color: white; padding: 15px; text-align: center; position: sticky; top:0; z-index:100; }
-        .buscador-box { position: sticky; top: 68px; background: var(--gris); padding: 10px 15px; z-index: 90; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        #inputBuscador { width: 100%; padding: 12px; border-radius: 25px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem; }
-        .container { max-width: 600px; margin: 15px auto; padding: 0 15px; }
-        .cliente-input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; box-sizing: border-box; }
-        
-        .grupo-titulo { background: #e8f5e9; color: var(--verde-tgi); padding: 10px; margin-top: 25px; margin-bottom: 12px; border-radius: 6px; font-size: 1.2rem; font-weight: bold; border-left: 5px solid var(--verde-tgi); text-transform: uppercase; }
-        
-        .card { background: white; padding: 15px; margin-bottom: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-left: 6px solid #ccc; }
-        .card.bajo { border-left-color: #2e7d32; background: #e8f5e9; } 
-        .card.subio { border-left-color: #fbc02d; background: #fffde7; } 
-        .card.congelado { border-left-color: #0288d1; background: #e1f5fe; } 
-        
-        .etiqueta-estado { font-size: 0.72rem; font-weight: bold; text-transform: uppercase; display: inline-block; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; }
-        .bajo .etiqueta-estado { background: #2e7d32; color: white; }
-        .subio .etiqueta-estado { background: #fbc02d; color: #333; }
-        .congelado .etiqueta-estado { background: #0288d1; color: white; }
-
-        .producto-fila { display: flex; align-items: center; justify-content: space-between; }
-        .info { flex-grow: 1; padding-right: 10px; }
-        .nombre { font-weight: bold; font-size: 1.05rem; text-transform: uppercase; }
-        .precio { color: #555; font-size: 0.85rem; margin-top: 2px; }
-        select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; width: 145px; font-size: 0.9rem; background: white; }
-        .nota-cliente { width: 100%; margin-top: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; display: none; }
-        
-        .footer-total { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -3px 10px rgba(0,0,0,0.1); text-align: center; z-index: 100; }
-        .btn-enviar { background: #25d366; color: white; border: none; padding: 12px; width: 100%; max-width: 500px; font-size: 1.1rem; font-weight: bold; border-radius: 25px; cursor: pointer; }
-    </style>
-</head>
-<body>
-
-<header>
-    <h2>🌿 Distribuidora TGI</h2>
-    <p>Pre-Pedido de Carga Diario</p>
-</header>
-
-<div class="buscador-box">
-    <input type="text" id="inputBuscador" placeholder="🔍 ¿Buscas algo específico? Escribe aquí..." oninput="filtrar()">
-</div>
-
-<div class="container">
-    <input type="text" id="nombreCliente" class="cliente-input" placeholder="👤 Escribe tu Nombre o Negocio (Obligatorio)">
-    <div id="catalogo">Conectando con tu lista de precios por grupos...</div>
-</div>
-
-<div class="footer-total">
-    <div style="font-weight: bold; margin-bottom: 8px;">Total Estimado: S/. <span id="total">0.00</span></div>
-    <button class="btn-enviar" onclick="enviarPedido()">📱 Enviar Lista por WhatsApp</button>
-</div>
-
+<!-- SISTEMA COMPLETO DISTRIBUIDORA TGI: MATRIZ + NOTAS + WHATSAPP -->
 <script>
-    // SISTEMA BLINDADO POR ID DE GOOGLE SHEETS
-    const SPREADSHEET_ID = "1vQchkb5a-PIZNgWkAco6eSXkWaP_1ql7hvnOEhVCJ4FHdD-sLbTU1GmRlEonqgAEDpPwe3oQD_9rQi1";
-    const SHEET_NAME = "WEB_MATRIZ";
-    const TELEFONO = "51917764281"; 
+let todosLosProductos = [];
+// Tu número de WhatsApp real para Distribuidora TGI
+const NÚMERO_WHATSAPP = "51917764281"; 
 
-   const URL_JSON = `https://google.com{SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
-    let productosDatos = [];
-
-    async function cargarExcel() {
-        try {
-            const res = await fetch(URL_JSON);
-            const text = await res.text();
-            
-            // Limpiar la respuesta segura de Google para extraer las celdas exactas
-            const jsonText = text.substring(text.indexOf("(") + 1, text.lastIndexOf(")"));
-            const data = JSON.parse(jsonText);
-            const rows = data.table.rows;
-            
-            productosDatos = [];
-
-            rows.forEach((row, idx) => {
-                const cells = row.c;
-                // Validamos que tenga información la fila antes de procesar
-                if(cells && cells[0] && cells[0].v) {
-                    productosDatos.push({
-                        id: idx,
-                        categoria: cells[0] ? cells[0].v.toString().toUpperCase().trim() : "GENERAL", // Columna A
-                        producto: cells[1] ? cells[1].v.toString().trim() : "", // Columna B
-                        medida: cells[2] ? cells[2].v.toString().trim() : "Kilo", // Columna C
-                        p_entero: cells[4] ? parseFloat(cells[4].v) || 0 : 0, // Columna E (PRECIO FINAL ENTERO)
-                        p_fraccion: cells[10] ? parseFloat(cells[10].v) || null : null, // Columna K (PRECIO FINAL FRACCION)
-                        p_mayorista: cells[11] ? parseFloat(cells[11].v) || null : null, // Columna L (GANANCIA MAYORISTA)
-                        estado: cells[5] ? cells[5].v.toString().toLowerCase().trim() : "congelado" // Columna F (ESTADISTICA)
-                    });
-                }
-            });
-            renderizarPorGrupos(productosDatos);
-        } catch (e) {
-            document.getElementById("catalogo").innerText = "Sincronizando los grupos... Asegúrate de otorgar el permiso 'Cualquier persona con el enlace' en Google Sheets.";
-        }
-    }
-
-    function renderizarPorGrupos(lista) {
-        const cat = document.getElementById("catalogo");
-        cat.innerHTML = "";
-
-        if (lista.length === 0) {
-            cat.innerText = "No se encontraron productos. Revisa los títulos en tu Google Sheets.";
-            return;
-        }
-
-        let grupos = {};
-        lista.forEach(p => {
-            if (!grupos[p.categoria]) grupos[p.categoria] = [];
-            grupos[p.categoria].push(p);
+// 1. Descargar la Web Matriz en formato CSV desde tu nuevo enlace
+async function cargarWebMatriz() {
+  const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbPkbgiCxe2RMmyLOrObjSI7yG6u9sszjPvC0BM8mKb3S4Q_lhZLqAaOdAhFW6glpChhoWvdYpHan7/pub?gid=1523459015&single=true&output=csv";
+  
+  try {
+    const respuesta = await fetch(urlCSV);
+    const textoCSV = await respuesta.text();
+    const filas = textoCSV.split("\n").map(f => f.split(","));
+    todosLosProductos = [];
+    
+    for(let i = 1; i < filas.length; i++) {
+      const celda = filas[i];
+      if (celda.length >= 6 && celda[1] && celda[1].trim() !== "") {
+        todosLosProductos.push({
+          id: i, // Identificador único para el pedido
+          categoria: celda[0].replace(/"/g, "").trim(),   // Columna A
+          producto: celda[1].replace(/"/g, "").trim(),    // Columna B
+          medida: celda[2].replace(/"/g, "").trim(),      // Columna C
+          precioEntero: parseFloat(celda[5].replace(/"/g, "").trim()) || 0, // Columna F
+          cantidad: 0,
+          nota: ""
         });
+      }
+    }
+    
+    mostrarCatalogoCompleto(todosLosProductos);
+  } catch (error) {
+    console.error("Error cargando inventario:", error);
+  }
+}
 
-        for (let grupoNombre in grupos) {
-            let grupoHtml = `<div class="seccion-grupo" data-grupo="${grupoNombre.toLowerCase()}">`;
-            grupoHtml += `<div class="grupo-titulo">📂 Categoría: ${grupoNombre}</div>`;
+// 2. Mostrar la lista completa organizada por grupos con selector de cantidad y notas
+function mostrarCatalogoCompleto(lista) {
+  const contenedor = document.getElementById('contenedor-productos') || document.querySelector('.lista-productos') || document.body;
+
+  // Ocultar mensaje de "Conectando..." cuando carguen los datos
+  const cargandoAviso = document.querySelector('.loading-message') || document.getElementById('mensaje-espera');
+  if(cargandoAviso) cargandoAviso.style.display = 'none';
+
+  if (lista.length === 0) {
+    contenedor.innerHTML = "<p style='text-align:center; padding:20px;'>No se encontraron productos.</p>";
+    return;
+  }
+
+  // Agrupar los productos por su categoría automáticamente
+  const grupos = {};
+  lista.forEach(prod => {
+    if (!grupos[prod.categoria]) grupos[prod.categoria] = [];
+    grupos[prod.categoria].push(prod);
+  });
+
+  let htmlFinal = "";
+  for (const nombreGrupo in grupos) {
+    htmlFinal += `
+      <div class="grupo-seccion" style="margin-top:25px; border-bottom:2px solid #27AE60; padding-bottom:5px;">
+        <h2 style="color:#27AE60; font-size:1.3em; text-transform:uppercase; margin-bottom:10px;">🥦 🍓 ${nombreGrupo}</h2>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr; gap:12px; padding: 10px 0;">
+    `;
+
+    grupos[nombreGrupo].forEach(prod => {
+      // Buscar el estado real en la lista global para no perder las cantidades al usar el buscador
+      const prodOriginal = todosLosProductos.find(p => p.id === prod.id);
+      
+      htmlFinal += `
+        <div class="tarjeta-producto" style="background:#fff; padding:12px; border-radius:8px; border:1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align:left;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div>
+              <strong style="font-size:1.1em; color:#333;">${prodOriginal.producto}</strong>
+              <span style="color:#666; font-size:0.9em;">(${prodOriginal.medida})</span>
+            </div>
+            <span style="font-weight:bold; color:#2c3e50;">S/. ${prodOriginal.precioEntero.toFixed(2)}</span>
+          </div>
+          
+          <!-- Controles de Cantidad y Notas Específicas -->
+          <div style="display:flex; gap:10px; align-items:center;">
+            <input type="number" min="0" placeholder="0" value="${prodOriginal.cantidad || ''}" 
+              oninput="actualizarCantidad(${prodOriginal.id}, this.value)" 
+              style="width:70px; padding:8px; border:1px solid #ccc; border-radius:4px; text-align:center; font-size:1em;">
             
-            grupos[grupoNombre].forEach(p => {
-                let opcionFraccion = p.p_fraccion ? `<option value="0.5" data-p="${p.p_fraccion}">1/2 ${p.medida.toLowerCase()} (S/. ${p.p_fraccion.toFixed(2)})</option>` : "";
-                let txtEtiqueta = p.estado === "bajo" ? "🔥 ¡En Oferta!" : (p.estado === "subio" ? "⚠️ Ajuste de mercado" : "❄️ Precio Congelado");
+            <input type="text" placeholder="Nota: Maduro, pinto, verde..." value="${prodOriginal.nota || ''}" 
+              oninput="actualizarNota(${prodOriginal.id}, this.value)" 
+              style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:0.9em;">
+          </div>
+        </div>
+      `;
+    });
+    htmlFinal += `</div>`;
+  }
+  contenedor.innerHTML = htmlFinal;
+}
 
-                grupoHtml += `
-                    <div class="card ${p.estado}" data-nom="${p.producto.toLowerCase()}">
-                        <span class="etiqueta-estado">${txtEtiqueta}</span>
-                        <div class="producto-fila">
-                            <div class="info">
-                                <div class="nombre">${p.producto}</div>
-                                <div class="precio">S/. ${p.p_entero.toFixed(2)} por ${p.medida.toLowerCase()}</div>
-                            </div>
-                            <select id="sel-${p.id}" onchange="controlarCambio(${p.id})">
-                                <option value="0" data-p="0">No llevar</option>
-                                ${opcionFraccion}
-                                <option value="1" data-p="${p.p_entero}">1 ${p.medida.toLowerCase()}</option>
-                                <option value="2" data-p="${p.p_mayorista ? p.p_mayorista * 2 : p.p_entero * 2}">2 ${p.medida.toLowerCase()}${p.p_mayorista ? ' (S/. ' + p.p_mayorista.toFixed(2) + ' c/u)' : ''}</option>
-                                <option value="3" data-p="${p.p_mayorista ? p.p_mayorista * 3 : p.p_entero * 3}">3 ${p.medida.toLowerCase()}</option>
-                                <option value="5" data-p="${p.p_mayorista ? p.p_mayorista * 5 : p.p_entero * 5}">5 ${p.medida.toLowerCase()}</option>
-                            </select>
-                        </div>
-                        <input type="text" id="nota-${p.id}" class="nota-cliente" placeholder="✍️ Nota para este producto (ej: maduros, verdes, grandes...)">
-                    </div>`;
-            });
-            
-            grupoHtml += `</div>`;
-            cat.innerHTML += grupoHtml;
-        }
+// 3. Guardar en memoria lo que el cliente digita
+function actualizarCantidad(id, valor) {
+  const prod = todosLosProductos.find(p => p.id === id);
+  if(prod) {
+    prod.cantidad = parseFloat(valor) || 0;
+    calcularTotalEstimado();
+  }
+}
+
+// Guardar notas específicas (Maduro, verde, pinto, etc.)
+function actualizarNota(id, valor) {
+  const prod = todosLosProductos.find(p => p.id === id);
+  if(prod) prod.nota = valor.trim();
+}
+
+// 4. Calcular el "Total Estimado" en la barra inferior en tiempo real
+function calcularTotalEstimado() {
+  let total = 0;
+  todosLosProductos.forEach(p => {
+    total += p.cantidad * p.precioEntero;
+  });
+  
+  // Actualizar el valor visual en tu barra verde inferior de la web
+  const elementoTotal = document.getElementById('total-estimado-valor') || document.querySelector('footer b') || document.querySelector('.total-barra');
+  if(elementoTotal) {
+    elementoTotal.innerText = `S/. ${total.toFixed(2)}`;
+  }
+}
+
+// 5. FUNCIÓN PARA ENVIAR EL PEDIDO POR WHATSAPP AL DAR CLIC AL BOTÓN
+function enviarPedidoWhatsApp() {
+  const pedidoFiltrado = todosLosProductos.filter(p => p.cantidad > 0);
+  
+  if (pedidoFiltrado.length === 0) {
+    alert("Por favor, agrega al menos una cantidad a un producto antes de enviar.");
+    return;
+  }
+  
+  let mensaje = "🛒 *NUEVO PEDIDO - DISTRIBUIDORA TGI*\n\n";
+  let totalPedido = 0;
+  
+  pedidoFiltrado.forEach((p, idx) => {
+    const subtotal = p.cantidad * p.precioEntero;
+    totalPedido += subtotal;
+    
+    mensaje += `${idx + 1}. *${p.producto}*\n`;
+    mensaje += `   Cantidad: ${p.cantidad} ${p.medida}\n`;
+    mensaje += `   Precio: S/. ${p.precioEntero.toFixed(2)} | Subtotal: S/. ${subtotal.toFixed(2)}\n`;
+    if(p.nota) {
+      mensaje += `   📝 *Nota:* _${p.nota}_\n`;
     }
+    mensaje += `---------------------------\n`;
+  });
+  
+  mensaje += `\n💰 *TOTAL ESTIMADO: S/. ${totalPedido.toFixed(2)}*`;
+  
+  // Enlace oficial de la API de WhatsApp
+  const urlWhatsApp = `https://whatsapp.com{NÚMERO_WHATSAPP}&text=${encodeURIComponent(mensaje)}`;
+  window.open(urlWhatsApp, '_blank');
+}
 
-    function controlarCambio(id) {
-        const selector = document.getElementById(`sel-${id}`);
-        const inputNota = document.getElementById(`nota-${id}`);
-        if(selector && inputNota) {
-            inputNota.style.display = selector.value !== "0" ? "block" : "none";
-            if(selector.value === "0") inputNota.value = "";
-        }
-        calcularTotal();
-    }
+// 6. Corregir y reactivar la función 'filtrar' de la línea 47
+function filtrar() {
+  const cuadroBusqueda = document.querySelector('input[type="text"]') || document.querySelector('input');
+  if(!cuadroBusqueda) return;
+  const textoBuscar = cuadroBusqueda.value.toUpperCase().trim();
+  
+  if (textoBuscar === "") {
+    mostrarCatalogoCompleto(todosLosProductos);
+    return;
+  }
+  
+  const filtrados = todosLosProductos.filter(item => 
+    item.producto.toUpperCase().includes(textoBuscar) || 
+    item.categoria.toUpperCase().includes(textoBuscar)
+  );
+  
+  mostrarCatalogoCompleto(filtrados);
+}
 
-    function calcularTotal() {
-        let t = 0;
-        productosDatos.forEach((p) => {
-            const sel = document.getElementById(`sel-${p.id}`);
-            if (sel) {
-                const opt = sel.options[sel.selectedIndex];
-                t += parseFloat(opt.getAttribute("data-p")) || 0;
-            }
-        });
-        document.getElementById("total").innerText = t.toFixed(2);
-    }
-
-    function filtrar() {
-        const bus = document.getElementById("inputBuscador").value.toLowerCase().trim();
-        
-        document.querySelectorAll(".card").forEach(c => {
+window.addEventListener('DOMContentLoaded', cargarWebMatriz);
+</script>
