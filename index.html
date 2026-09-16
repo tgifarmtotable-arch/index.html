@@ -3,38 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Digital - Pedidos por WhatsApp</title>
+    <title>Distribuidora TGI - Pedidos</title>
     <style>
         :root {
             --bg-color: #f9f9f9;
             --card-bg: #ffffff;
             --text-color: #333333;
-            --accent-color: #25D366; /* Verde WhatsApp */
+            --accent-color: #25D366; 
             --border-color: #e0e0e0;
+            --btn-green: #0F7643;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
+            padding: 0;
+            padding-bottom: 120px; /* Espacio para el menú flotante inferior */
+        }
+        .header-negocio {
+            text-align: center;
             padding: 20px;
+            background: #fff;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .header-negocio h1 {
+            color: var(--btn-green);
+            margin: 0;
+            font-size: 1.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .header-negocio p {
+            margin: 5px 0 0 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .tabs-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+            background: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background: #f0f0f0;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .tab-btn.active {
+            background: var(--btn-green);
+            color: #fff;
+            border-color: var(--btn-green);
         }
         .container {
             max-width: 600px;
             margin: 0 auto;
+            padding: 15px;
         }
-        h1 {
-            text-align: center;
-            font-weight: 400;
-            margin-bottom: 30px;
+        .categoria-contenido {
+            display: none; /* Oculto por defecto */
         }
-        .categoria-titulo {
-            font-size: 1.2rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 2px solid var(--text-color);
-            padding-bottom: 5px;
-            margin-top: 30px;
+        .categoria-contenido.active {
+            display: block; /* Muestra solo la pestaña activa */
         }
         .producto-card {
             background: var(--card-bg);
@@ -42,6 +85,7 @@
             border-radius: 8px;
             padding: 15px;
             margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
         .producto-header {
             display: flex;
@@ -51,6 +95,12 @@
         }
         .producto-nombre {
             font-weight: 600;
+            font-size: 1.05rem;
+        }
+        .producto-precios {
+            font-size: 0.85rem;
+            color: #666;
+            text-align: right;
         }
         .opciones-seleccion {
             display: flex;
@@ -59,188 +109,143 @@
         }
         select, input[type="text"] {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             border: 1px solid var(--border-color);
-            border-radius: 4px;
+            border-radius: 6px;
             box-sizing: border-box;
+            font-size: 0.9rem;
         }
-        .carrito-resumen {
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: var(--btn-green);
+        }
+        /* Barra Fija Inferior (Igual a tu imagen) */
+        .barra-inferior {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             background: #fff;
-            border: 2px solid var(--text-color);
-            padding: 20px;
-            margin-top: 40px;
-            border-radius: 8px;
-        }
-        .resumen-linea {
+            border-top: 1px solid var(--border-color);
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            align-items: center;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+            z-index: 100;
         }
-        .total-linea {
+        .valores-resumen {
+            font-size: 0.85rem;
+            color: #555;
+            line-height: 1.4;
+        }
+        .valores-resumen .total-destacado {
+            font-size: 1.1rem;
             font-weight: bold;
-            font-size: 1.2rem;
-            border-top: 1px dashed var(--border-color);
-            padding-top: 10px;
-            margin-top: 10px;
+            color: #000;
+            margin-top: 2px;
         }
         .btn-whatsapp {
             background-color: var(--accent-color);
             color: white;
             border: none;
-            padding: 15px;
-            width: 100%;
-            font-size: 1.1rem;
+            padding: 12px 20px;
+            font-size: 1rem;
             font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
-            margin-top: 15px;
-            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-whatsapp:hover {
+            background-color: #20ba59;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Mi Catálogo Minimalista</h1>
-
-    <!-- CATEGORÍA VERDURAS -->
-    <div class="categoria-titulo">Verduras y Frutas</div>
-    
-    <div class="producto-card" data-nombre="Tomate" data-precio-base="4.00" data-precio-fraccion="2.20" data-categoria="Verduras y Frutas">
-        <div class="producto-header">
-            <span class="producto-nombre">Tomate Italiano</span>
-            <span>S/. 4.00 kg / Frac: S/. 2.20</span>
-        </div>
-        <div class="opciones-seleccion">
-            <select class="select-opcion" onchange="calcularPedido()">
-                <option value="0" data-peso="0">-- Seleccionar cantidad --</option>
-                <option value="1" data-peso="1">1 kg (Entero)</option>
-                <option value="0.5" data-peso="0.5" data-es-fraccion="true">Medio Kilo (Fracción)</option>
-                <option value="2" data-peso="2">2 kg (Entero)</option>
-                <option value="3" data-peso="3">3 kg (Entero)</option>
-            </select>
-        </div>
-        <input type="text" class="input-nota" placeholder="Nota: ej. Pintones, maduros..." oninput="calcularPedido()">
+    <div class="header-negocio">
+        <h1>Distribuidora TGI</h1>
+        <p>Tu mercado fresco a un clic de distancia</p>
     </div>
 
-    <div class="producto-card" data-nombre="Espinaca" data-precio-base="3.50" data-precio-fraccion="1.80" data-categoria="Verduras y Frutas">
-        <div class="producto-header">
-            <span class="producto-nombre">Espinaca</span>
-            <span>S/. 3.50 atado / Frac: S/. 1.80</span>
-        </div>
-        <div class="opciones-seleccion">
-            <select class="select-opcion" onchange="calcularPedido()">
-                <option value="0" data-peso="0">-- Seleccionar cantidad --</option>
-                <option value="1" data-peso="1">1 Atado (Entero)</option>
-                <option value="0.5" data-peso="0.5" data-es-fraccion="true">Medio Atado (Fracción)</option>
-                <option value="2" data-peso="2">2 Atados (Entero)</option>
-            </select>
-        </div>
-        <input type="text" class="input-nota" placeholder="Nota: ej. Hojas grandes..." oninput="calcularPedido()">
+    <!-- PESTAÑAS (TABS) -->
+    <div class="tabs-container">
+        <button class="tab-btn active" onclick="cambiarPestaña('verduras', this)">🥦 VERDURAS FRESCAS</button>
+        <button class="tab-btn" onclick="cambiarPestaña('frutas', this)">🍎 FRUTAS SELECTAS</button>
     </div>
 
-    <!-- CATEGORÍA AVES -->
-    <div class="categoria-titulo">Aves</div>
-    
-    <div class="producto-card" data-nombre="Pollo Entero" data-precio-base="10.50" data-precio-fraccion="9.90" data-categoria="Aves" data-es-pollo="true">
-        <div class="producto-header">
-            <span class="producto-nombre">Pollo Entero</span>
-            <span>S/. 10.50 c/u (A partir de 2: S/. 9.90 c/u)</span>
-        </div>
-        <div class="opciones-seleccion">
-            <select class="select-opcion" onchange="calcularPedido()">
-                <option value="0" data-peso="0">-- Seleccionar cantidad --</option>
-                <option value="1" data-peso="2.5">1 Pollo (Aprox 2.5kg)</option>
-                <option value="2" data-peso="5">2 Pollos (Aprox 5kg)</option>
-                <option value="3" data-peso="7.5">3 Pollos (Aprox 7.5kg)</option>
-            </select>
-        </div>
-        <input type="text" class="input-nota" placeholder="Nota: ej. Trozado en 4, sin menudencia..." oninput="calcularPedido()">
-    </div>
-
-    <!-- RESUMEN EN PANTALLA -->
-    <div class="carrito-resumen">
-        <h3>Resumen de tu Pedido</h3>
-        <div class="resumen-linea"><span>Subtotal Productos:</span><span id="resumen-subtotal">S/. 0.00</span></div>
-        <div class="resumen-linea"><span>Peso Total Estimado:</span><span id="resumen-peso">0.00 kg</span></div>
-        <div class="resumen-linea"><span>Costo Delivery:</span><span id="resumen-delivery">S/. 0.00</span></div>
-        <div class="resumen-linea total-linea"><span>TOTAL:</span><span id="resumen-total">S/. 0.00</span></div>
+    <div class="container">
         
-        <button class="btn-whatsapp" onclick="enviarWhatsApp()">Enviar pedido por WhatsApp</button>
-    </div>
-</div>
-
-<script>
-    function calcularPedido() {
-        let subtotal = 0;
-        let pesoTotal = 0;
-        const cards = document.querySelectorAll('.producto-card');
-
-        cards.forEach(card => {
-            const select = card.querySelector('.select-opcion');
-            const cantidad = parseFloat(select.value);
-            const optionSeleccionada = select.options[select.selectedIndex];
-            const pesoItem = parseFloat(optionSeleccionada.getAttribute('data-peso')) || 0;
+        <!-- CONTENIDO: VERDURAS -->
+        <div id="verduras" class="categoria-contenido active">
             
-            if (cantidad > 0) {
-                let precioUnitario = parseFloat(card.getAttribute('data-precio-base'));
-                const precioFraccion = parseFloat(card.getAttribute('data-precio-fraccion'));
-                const esFraccion = optionSeleccionada.getAttribute('data-es-fraccion') === 'true';
-                const esPollo = card.getAttribute('data-es-pollo') === 'true';
+            <div class="producto-card" data-nombre="Tomate Italiano" data-precio-base="4.00" data-precio-fraccion="2.20" data-categoria="Verduras Frescas">
+                <div class="producto-header">
+                    <span class="producto-nombre">Tomate Italiano</span>
+                    <div class="producto-precios">S/. 4.00 kg<br>Frac: S/. 2.20</div>
+                </div>
+                <div class="opciones-seleccion">
+                    <select class="select-opcion" onchange="calcularPedido()">
+                        <option value="0" data-peso="0">-- Seleccionar cantidad --</option>
+                        <option value="1" data-peso="1">1 kg (Entero)</option>
+                        <option value="0.5" data-peso="0.5" data-es-fraccion="true">Medio Kilo (Fracción)</option>
+                        <option value="2" data-peso="2">2 kg (Entero)</option>
+                        <option value="3" data-peso="3">3 kg (Entero)</option>
+                    </select>
+                </div>
+                <input type="text" class="input-nota" placeholder="Nota: ej. Pintones, bien maduros..." oninput="calcularPedido()">
+            </div>
 
-                // Regla 1: Medio Kilo / Medio Atado usa costo real fracción
-                if (esFraccion) {
-                    // Multiplica 1 (unidad de fracción) por el precio especial de fracción
-                    subtotal += precioFraccion;
-                } 
-                // Regla 2: Pollo Entero (Tarifa si lleva 2 o más)
-                else if (esPollo && cantidad >= 2) {
-                    subtotal += cantidad * precioFraccion;
-                } 
-                // Precio Regular
-                else {
-                    subtotal += cantidad * precioUnitario;
-                }
+            <div class="producto-card" data-nombre="Espinaca" data-precio-base="3.50" data-precio-fraccion="1.80" data-categoria="Verduras Frescas">
+                <div class="producto-header">
+                    <span class="producto-nombre">Espinaca</span>
+                    <div class="producto-precios">S/. 3.50 atado<br>Frac: S/. 1.80</div>
+                </div>
+                <div class="opciones-seleccion">
+                    <select class="select-opcion" onchange="calcularPedido()">
+                        <option value="0" data-peso="0">-- Seleccionar cantidad --</option>
+                        <option value="1" data-peso="1">1 Atado (Entero)</option>
+                        <option value="0.5" data-peso="0.5" data-es-fraccion="true">Medio Atado (Fracción)</option>
+                        <option value="2" data-peso="2">2 Atados (Entero)</option>
+                    </select>
+                </div>
+                <input type="text" class="input-nota" placeholder="Nota: ej. Hojas grandes y limpias..." oninput="calcularPedido()">
+            </div>
 
-                pesoTotal += pesoItem;
-            }
-        });
+        </div>
 
-        // Regla 3: Cálculo del Delivery basado en el Peso Total
-        let delivery = 0;
-        if (pesoTotal >= 1 && pesoTotal <= 6.99) {
-            delivery = 4.99;
-        } else if (pesoTotal >= 7) {
-            delivery = 12.99;
-        }
+        <!-- CONTENIDO: FRUTAS -->
+        <div id="frutas" class="categoria-contenido">
+            
+            <div class="producto-card" data-nombre="Plátano de Seda" data-precio-base="5.00" data-precio-fraccion="2.80" data-categoria="Frutas Selectas">
+                <div class="producto-header">
+                    <span class="producto-nombre">Plátano de Seda</span>
+                    <div class="producto-precios">S/. 5.00 kg<br>Frac: S/. 2.80</div>
+                </div>
+                <div class="opciones-seleccion">
+                    <select class="select-opcion" onchange="calcularPedido()">
+                        <option value="0" data-peso="0">-- Seleccionar cantidad --</option>
+                        <option value="1" data-peso="1">1 kg (Entero)</option>
+                        <option value="0.5" data-peso="0.5" data-es-fraccion="true">Medio Kilo (Fracción)</option>
+                        <option value="2" data-peso="2">2 kg (Entero)</option>
+                    </select>
+                </div>
+                <input type="text" class="input-nota" placeholder="Nota: ej. Maduros para hoy..." oninput="calcularPedido()">
+            </div>
 
-        let totalFinal = subtotal + delivery;
-
-        // Actualizar visualmente la pantalla
-        document.getElementById('resumen-subtotal').innerText = `S/. ${subtotal.toFixed(2)}`;
-        document.getElementById('resumen-peso').innerText = `${pesoTotal.toFixed(2)} kg`;
-        document.getElementById('resumen-delivery').innerText = `S/. ${delivery.toFixed(2)}`;
-        document.getElementById('resumen-total').innerText = `S/. ${totalFinal.toFixed(2)}`;
-    }
-
-    function enviarWhatsApp() {
-        const numeroWhatsApp = "51917764281";
-        const cards = document.querySelectorAll('.producto-card');
-        
-        let mensaje = "[NUEVO PEDIDO]\n";
-        let categoriasMapeadas = {};
-        let pesoTotal = 0;
-        let subtotal = 0;
-        let tieneProductos = false;
-
-        cards.forEach(card => {
-            const select = card.querySelector('.select-opcion');
-            const cantidad = parseFloat(select.value);
-            const nota = card.querySelector('.input-nota').value.trim();
-            const optionSeleccionada = select.options[select.selectedIndex];
-            const pesoItem = parseFloat(optionSeleccionada.getAttribute('data-peso')) || 0;
-
-            if (cantidad > 0) {
-                tieneProductos = true;
-                const nombre = card.getAttribute('data-nombre');
-                const categoria = card.getAttribute('data-categoria');
+            <!-- Ejemplo Especial de Pollo (Se puede poner en cualquier pestaña) -->
+            <div class="producto-card" data-nombre="Pollo Entero" data-precio-base="10.50" data-precio-fraccion="9.90" data-categoria="Carnes y Aves" data-es-pollo="true">
+                <div class="producto-header">
+                    <span class="producto-nombre">Pollo Entero</span>
+                    <div class="producto-precios">S/. 10.50 c/u<br>Frac (2+): S/. 9.90 c/u</div>
+                </div>
+                <div class="opciones-seleccion">
+                    <select class="select-opcion" onchange="calcularPedido()">
+                        <option value="0" data-peso="0">-- Seleccionar cantidad --</option>
+                        <option value="1" data-peso="2.5">1 Pollo (Aprox 2.5kg)</option>
+                        <option value="2" data-peso="5">2 Pollos (Aprox 5kg)</option>
+                        <option value="3" data-peso="7.5">3 Pollos (Aprox 7.5kg)</option>
+                    </select>
+                </div>
