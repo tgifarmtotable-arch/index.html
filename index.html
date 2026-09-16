@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distribuidora TGI - Pedidos</title>
+    <title>Distribuidora TGI - Pedidos en Vivo</title>
     <style>
         :root {
             --bg-color: #f9f9f9;
@@ -18,8 +18,7 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 0;
-            padding-bottom: 120px; /* Espacio para el menú flotante inferior */
+            padding-bottom: 120px;
         }
         .header-negocio {
             text-align: center;
@@ -32,7 +31,6 @@
             margin: 0;
             font-size: 1.6rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
         .header-negocio p {
             margin: 5px 0 0 0;
@@ -57,11 +55,8 @@
             background: #f0f0f0;
             cursor: pointer;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #555;
-            display: flex;
-            align-items: center;
-            gap: 5px;
         }
         .tab-btn.active {
             background: var(--btn-green);
@@ -74,10 +69,10 @@
             padding: 15px;
         }
         .categoria-contenido {
-            display: none; /* Oculto por defecto */
+            display: none;
         }
         .categoria-contenido.active {
-            display: block; /* Muestra solo la pestaña activa */
+            display: block;
         }
         .producto-card {
             background: var(--card-bg);
@@ -85,7 +80,6 @@
             border-radius: 8px;
             padding: 15px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
         .producto-header {
             display: flex;
@@ -95,7 +89,6 @@
         }
         .producto-nombre {
             font-weight: 600;
-            font-size: 1.05rem;
         }
         .producto-precios {
             font-size: 0.85rem;
@@ -113,13 +106,7 @@
             border: 1px solid var(--border-color);
             border-radius: 6px;
             box-sizing: border-box;
-            font-size: 0.9rem;
         }
-        input[type="text"]:focus, select:focus {
-            outline: none;
-            border-color: var(--btn-green);
-        }
-        /* Barra Fija Inferior (Igual a tu imagen) */
         .barra-inferior {
             position: fixed;
             bottom: 0;
@@ -131,19 +118,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
             z-index: 100;
         }
         .valores-resumen {
             font-size: 0.85rem;
             color: #555;
-            line-height: 1.4;
         }
         .valores-resumen .total-destacado {
             font-size: 1.1rem;
             font-weight: bold;
             color: #000;
-            margin-top: 2px;
         }
         .btn-whatsapp {
             background-color: var(--accent-color);
@@ -154,12 +138,11 @@
             font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
-        .btn-whatsapp:hover {
-            background-color: #20ba59;
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
         }
     </style>
 </head>
@@ -170,82 +153,124 @@
         <p>Tu mercado fresco a un clic de distancia</p>
     </div>
 
-    <!-- PESTAÑAS (TABS) -->
     <div class="tabs-container">
         <button class="tab-btn active" onclick="cambiarPestaña('verduras', this)">🥦 VERDURAS FRESCAS</button>
         <button class="tab-btn" onclick="cambiarPestaña('frutas', this)">🍎 FRUTAS SELECTAS</button>
     </div>
 
     <div class="container">
-        
-        <!-- CONTENIDO: VERDURAS -->
-        <div id="verduras" class="categoria-contenido active">
-            
-            <div class="producto-card" data-nombre="Tomate Italiano" data-precio-base="4.00" data-precio-fraccion="2.20" data-categoria="Verduras Frescas">
-                <div class="producto-header">
-                    <span class="producto-nombre">Tomate Italiano</span>
-                    <div class="producto-precios">S/. 4.00 kg<br>Frac: S/. 2.20</div>
-                </div>
-                <div class="opciones-seleccion">
-                    <select class="select-opcion" onchange="calcularPedido()">
-                        <option value="0" data-peso="0">-- Seleccionar cantidad --</option>
-                        <option value="1" data-peso="1">1 kg (Entero)</option>
-                        <option value="0.5" data-peso="0.5" data-es-fraccion="true">Medio Kilo (Fracción)</option>
-                        <option value="2" data-peso="2">2 kg (Entero)</option>
-                        <option value="3" data-peso="3">3 kg (Entero)</option>
-                    </select>
-                </div>
-                <input type="text" class="input-nota" placeholder="Nota: ej. Pintones, bien maduros..." oninput="calcularPedido()">
-            </div>
+        <div id="loading" class="loading">Cargando productos desde la matriz...</div>
+        <div id="verduras" class="categoria-contenido active"></div>
+        <div id="frutas" class="categoria-contenido"></div>
+    </div>
 
-            <div class="producto-card" data-nombre="Espinaca" data-precio-base="3.50" data-precio-fraccion="1.80" data-categoria="Verduras Frescas">
-                <div class="producto-header">
-                    <span class="producto-nombre">Espinaca</span>
-                    <div class="producto-precios">S/. 3.50 atado<br>Frac: S/. 1.80</div>
-                </div>
-                <div class="opciones-seleccion">
-                    <select class="select-opcion" onchange="calcularPedido()">
-                        <option value="0" data-peso="0">-- Seleccionar cantidad --</option>
-                        <option value="1" data-peso="1">1 Atado (Entero)</option>
-                        <option value="0.5" data-peso="0.5" data-es-fraccion="true">Medio Atado (Fracción)</option>
-                        <option value="2" data-peso="2">2 Atados (Entero)</option>
-                    </select>
-                </div>
-                <input type="text" class="input-nota" placeholder="Nota: ej. Hojas grandes y limpias..." oninput="calcularPedido()">
-            </div>
-
+    <div class="barra-inferior">
+        <div class="valores-resumen">
+            <div>Kilos: <span id="resumen-peso">0.00 kg</span></div>
+            <div>Delivery: S/. <span id="resumen-delivery">0.00</span></div>
+            <div class="total-destacado">Total: S/. <span id="resumen-total">0.00</span></div>
         </div>
+        <button class="btn-whatsapp" onclick="enviarWhatsApp()">Pedir por WhatsApp ➜</button>
+    </div>
 
-        <!-- CONTENIDO: FRUTAS -->
-        <div id="frutas" class="categoria-contenido">
+<script>
+    // ⚠️ PEGA AQUÍ TU ENLACE DE PUBLICACIÓN EN WEB (OPCIÓN CSV)
+    const URL_MATRIZ = "https://google.com";
+
+    async function consumirMatriz() {
+        try {
+            const respuesta = await fetch(URL_MATRIZ);
+            const textoCSV = await respuesta.text();
+            procesarDatos(textoCSV);
+            document.getElementById('loading').style.display = 'none';
+        } catch (error) {
+            console.error("Error cargando la matriz web:", error);
+            document.getElementById('loading').innerText = "Error al conectar con el inventario matriz.";
+        }
+    }
+
+    function procesarDatos(csv) {
+        const lineas = csv.split("\n");
+        const contenedorVerduras = document.getElementById('verduras');
+        const contenedorFrutas = document.getElementById('frutas');
+
+        // Empezamos desde la línea 1 para saltar el encabezado de tu tabla
+        for (let i = 1; i < lineas.length; i++) {
+            if (!lineas[i].trim()) continue;
             
-            <div class="producto-card" data-nombre="Plátano de Seda" data-precio-base="5.00" data-precio-fraccion="2.80" data-categoria="Frutas Selectas">
-                <div class="producto-header">
-                    <span class="producto-nombre">Plátano de Seda</span>
-                    <div class="producto-precios">S/. 5.00 kg<br>Frac: S/. 2.80</div>
-                </div>
-                <div class="opciones-seleccion">
-                    <select class="select-opcion" onchange="calcularPedido()">
-                        <option value="0" data-peso="0">-- Seleccionar cantidad --</option>
-                        <option value="1" data-peso="1">1 kg (Entero)</option>
-                        <option value="0.5" data-peso="0.5" data-es-fraccion="true">Medio Kilo (Fracción)</option>
-                        <option value="2" data-peso="2">2 kg (Entero)</option>
-                    </select>
-                </div>
-                <input type="text" class="input-nota" placeholder="Nota: ej. Maduros para hoy..." oninput="calcularPedido()">
-            </div>
+            // Separamos por comas las columnas de tu Excel
+            const columnas = lineas[i].split(",");
+            
+            const categoria = columnas[0]?.trim().toUpperCase(); // Columna A
+            const producto = columnas[1]?.trim();               // Columna B
+            const medida = columnas[2]?.trim();                 // Columna C
+            const precioEntero = parseFloat(columnas[5]) || 0;  // Columna F (Precio Final Entero)
+            const precioFraccion = parseFloat(columnas[11]) || 0; // Columna L (Precio Final Fracción)
+            
+            if (!producto) continue;
 
-            <!-- Ejemplo Especial de Pollo (Se puede poner en cualquier pestaña) -->
-            <div class="producto-card" data-nombre="Pollo Entero" data-precio-base="10.50" data-precio-fraccion="9.90" data-categoria="Carnes y Aves" data-es-pollo="true">
-                <div class="producto-header">
-                    <span class="producto-nombre">Pollo Entero</span>
-                    <div class="producto-precios">S/. 10.50 c/u<br>Frac (2+): S/. 9.90 c/u</div>
+            const esPollo = producto.toUpperCase().includes("POLLO ENTERO");
+            let txtFraccion = medida === "ATADO" ? "Medio Atado" : "Medio Kilo";
+            if (esPollo) txtFraccion = "Precio Especial (2 a más)";
+
+            let opcionesHTML = `
+                <option value="0" data-peso="0">-- Cantidad --</option>
+                <option value="1" data-peso="1">1 ${medida.toLowerCase()}</option>
+            `;
+
+            if (precioFraccion > 0 && !esPollo) {
+                opcionesHTML += `<option value="0.5" data-peso="0.5" data-es-fraccion="true">${txtFraccion}</option>`;
+            }
+
+            opcionesHTML += `
+                <option value="2" data-peso="2">2 ${medida.toLowerCase()}s</option>
+                <option value="3" data-peso="3">3 ${medida.toLowerCase()}s</option>
+                <option value="4" data-peso="4">4 ${medida.toLowerCase()}s</option>
+                <option value="5" data-peso="5">5 ${medida.toLowerCase()}s</option>
+            `;
+
+            let precioDetalle = `S/. ${precioEntero.toFixed(2)} ${medida.toLowerCase()}`;
+            if (precioFraccion > 0) {
+                precioDetalle += esPollo 
+                    ? `<br><small style="color:green">2 a más: S/. ${precioFraccion.toFixed(2)} c/u</small>` 
+                    : `<br><small>Frac: S/. ${precioFraccion.toFixed(2)}</small>`;
+            }
+
+            const cardHTML = `
+                <div class="producto-card" 
+                     data-nombre="${producto}" 
+                     data-precio-base="${precioEntero}" 
+                     data-precio-fraccion="${precioFraccion}" 
+                     data-categoria="${categoria}"
+                     data-es-pollo="${esPollo ? 'true' : 'false'}">
+                    <div class="producto-header">
+                        <span class="producto-nombre">${producto}</span>
+                        <div class="producto-precios">${precioDetalle}</div>
+                    </div>
+                    <div class="opciones-seleccion">
+                        <select class="select-opcion" onchange="calcularPedido()">
+                            ${opcionesHTML}
+                        </select>
+                    </div>
+                    <input type="text" class="input-nota" placeholder="Notas (maduro, pintón, etc.)..." oninput="calcularPedido()">
                 </div>
-                <div class="opciones-seleccion">
-                    <select class="select-opcion" onchange="calcularPedido()">
-                        <option value="0" data-peso="0">-- Seleccionar cantidad --</option>
-                        <option value="1" data-peso="2.5">1 Pollo (Aprox 2.5kg)</option>
-                        <option value="2" data-peso="5">2 Pollos (Aprox 5kg)</option>
-                        <option value="3" data-peso="7.5">3 Pollos (Aprox 7.5kg)</option>
-                    </select>
-                </div>
+            `;
+
+            if (categoria.includes("VERDURAS")) {
+                contenedorVerduras.innerHTML += cardHTML;
+            } else if (categoria.includes("FRUTAS")) {
+                contenedorFrutas.innerHTML += cardHTML;
+            }
+        }
+    }
+
+    function cambiarPestaña(idCategoria, boton) {
+        document.querySelectorAll('.categoria-contenido').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(idCategoria).classList.add('active');
+        boton.classList.add('active');
+    }
+
+    function calcularPedido() {
+        let subtotal = 0;
+        let pesoTotal = 0;
