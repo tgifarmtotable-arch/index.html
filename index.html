@@ -1,9 +1,24 @@
-<!-- SISTEMA PREMIUM DISTRIBUIDORA TGI: DISEÑO COMPACTO + WHATSAPP -->
+<!-- SISTEMA PREMIUM DISTRIBUIDORA TGI: PESTAÑAS + COMPACTO + WHATSAPP -->
+<div id="tgi-sistema-tienda" style="font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; max-width: 800px; margin: 0 auto; padding: 10px;">
+  
+  <!-- BARRA DE PESTAÑAS (SE GENERAN AUTOMÁTICAMENTE) -->
+  <div id="tgi-pestañas-contenedor" style="display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; margin-bottom: 15px; border-bottom: 1px solid #e0e0e0; scrollbar-width: none;">
+    <!-- Las pestañas elegantes aparecerán aquí -->
+  </div>
+
+  <!-- CONTENEDOR DE LOS PRODUCTOS -->
+  <div id="contenedor-productos">
+    <p style="text-align: center; color: #666; font-size: 0.95em; padding: 20px;">Cargando catálogo premium...</p>
+  </div>
+
+</div>
+
 <script>
 let todosLosProductos = [];
+let categoriaActiva = ""; 
 const NÚMERO_WHATSAPP = "51917764281"; 
 
-// 1. Descargar los datos de tu Google Sheets Matrix
+// 1. Descargar base de datos CSV de la WEB MATRIZ
 async function cargarWebMatriz() {
   const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbPkbgiCxe2RMmyLOrObjSI7yG6u9sszjPvC0BM8mKb3S4Q_lhZLqAaOdAhFW6glpChhoWvdYpHan7/pub?gid=1523459015&single=true&output=csv";
   
@@ -28,78 +43,96 @@ async function cargarWebMatriz() {
       }
     }
     
-    mostrarCatalogoCompleto(todosLosProductos);
-    inyectarBotonWhatsApp(); // Crear el botón elegante al final
+    // Definir la primera categoría como activa por defecto
+    if(todosLosProductos.length > 0) {
+      categoriaActiva = todosLosProductos[0].categoria;
+    }
+    
+    dibujarInterfazMatriz();
+    inyectarBotonWhatsApp();
   } catch (error) {
-    console.error("Error cargando inventario:", error);
+    console.error("Error al cargar la matriz comercial:", error);
   }
 }
 
-// 2. Renderizar catálogo con diseño hiper-compacto y elegante
-function mostrarCatalogoCompleto(lista) {
-  const contenedor = document.getElementById('contenedor-productos') || document.querySelector('.lista-productos') || document.body;
+// 2. Dibujar las Pestañas y la Pantalla del Grupo Seleccionado
+function dibujarInterfazMatriz() {
+  const contenedorPestañas = document.getElementById('tgi-pestañas-contenedor');
+  const contenedorProductos = document.getElementById('contenedor-productos');
+  
+  if (!contenedorProductos) return;
 
-  const cargandoAviso = document.querySelector('.loading-message') || document.getElementById('mensaje-espera');
-  if(cargandoAviso) cargandoAviso.style.display = 'none';
+  // Obtener categorías únicas para las pestañas
+  const categorias Unicas = [...new Set(todosLosProductos.map(p => p.categoria))];
 
-  if (lista.length === 0) {
-    contenedor.innerHTML = "<p style='text-align:center; font-family:sans-serif; color:#777; padding:20px;'>No se encontraron productos.</p>";
-    return;
+  // Dibujar botones de pestañas elegantes
+  if(contenedorPestañas) {
+    contenedorPestañas.innerHTML = categoriasUnicas.map(cat => {
+      const esActiva = cat === categoriaActiva;
+      return `
+        <button onclick="cambiarGrupo('${cat}')" style="
+          padding: 8px 16px;
+          background: ${esActiva ? '#1E8449' : '#f5f5f5'};
+          color: ${esActiva ? '#ffffff' : '#555555'};
+          border: 1px solid ${esActiva ? '#1E8449' : '#dddddd'};
+          border-radius: 20px;
+          font-size: 0.9em;
+          font-weight: 600;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: all 0.2s ease;
+          box-shadow: ${esActiva ? '0 2px 6px rgba(30,132,73,0.3)' : 'none'};
+        ">${cat}</button>
+      `;
+    }).join('');
   }
 
-  const grupos = {};
-  lista.forEach(prod => {
-    if (!grupos[prod.categoria]) grupos[prod.categoria] = [];
-    grupos[prod.categoria].push(prod);
+  // Filtrar productos solo del grupo activo
+  const productosDelGrupo = todosLosProductos.filter(p => p.categoria === categoriaActiva);
+
+  // Dibujar el listado ultracompacto y fino estilo gourmet
+  let htmlProductos = `
+    <div style="display: flex; flex-direction: column; gap: 4px; background: #ffffff; padding: 5px; border-radius: 8px;">
+  `;
+
+  productosDelGrupo.forEach(prod => {
+    htmlProductos += `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #f2f2f2; font-size: 0.92em; gap: 10px;">
+        
+        <!-- Detalle Producto -->
+        <div style="flex: 2; text-align: left;">
+          <span style="font-weight: 600; color: #2c3e50;">${prod.producto}</span>
+          <span style="color: #7f8c8d; font-size: 0.85em; margin-left: 3px;">(${prod.medida.toLowerCase()})</span>
+        </div>
+        
+        <!-- Notas Finitas y Cantidad -->
+        <div style="flex: 3; display: flex; align-items: center; gap: 6px; justify-content: flex-end;">
+          <input type="text" placeholder="Nota: maduro, pinto..." value="${prod.nota || ''}" 
+            oninput="actualizarNota(${prod.id}, this.value)" 
+            style="width: 100%; max-width: 160px; padding: 5px 8px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 0.82em; color: #444; background: #fafafa; outline: none;">
+          
+          <input type="number" min="0" placeholder="0" value="${prod.cantidad || ''}" 
+            oninput="actualizarCantidad(${prod.id}, this.value)" 
+            style="width: 45px; padding: 4px; border: 1px solid #cccccc; border-radius: 4px; text-align: center; font-size: 0.9em; font-weight: bold; color: #2c3e50; outline: none;">
+        </div>
+
+        <!-- Precio Fino -->
+        <div style="min-width: 65px; text-align: right; font-weight: 700; color: #27AE60;">
+          S/. ${prod.precioEntero.toFixed(2)}
+        </div>
+
+      </div>
+    `;
   });
 
-  let htmlFinal = "";
-  for (const nombreGrupo in grupos) {
-    // Título elegante minimalista
-    htmlFinal += `
-      <div class="grupo-seccion" style="margin: 30px 0 10px 0; border-left: 4px solid #1E8449; padding-left: 10px; text-align: left;">
-        <h2 style="color:#1E8449; font-family:'Segoe UI', Tahoma, sans-serif; font-size:1.15em; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin:0;">
-          🥦 🍓 ${nombreGrupo}
-        </h2>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:6px; padding-bottom: 15px;">
-    `;
+  htmlProductos += `</div>`;
+  contenedorProductos.innerHTML = htmlProductos;
+}
 
-    grupos[nombreGrupo].forEach(prod => {
-      const prodOriginal = todosLosProductos.find(p => p.id === prod.id);
-      
-      // Fila ultracompacta tipo catálogo de restaurante gourmet
-      htmlFinal += `
-        <div class="tarjeta-producto" style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 6px 12px; border-radius: 6px; border: 1px solid #eaeaea; font-family: 'Segoe UI', Tahoma, sans-serif; box-shadow: 0 1px 3px rgba(0,0,0,0.02); text-align: left; gap: 15px;">
-          
-          <!-- Nombre y Medida Compactos -->
-          <div style="flex: 2; min-width: 140px;">
-            <span style="font-weight: 500; color: #2c3e50; font-size: 0.95em;">${prodOriginal.producto}</span>
-            <span style="color: #888; font-size: 0.8em; margin-left: 4px; font-weight: 400;">(${prodOriginal.medida.toLowerCase()})</span>
-          </div>
-          
-          <!-- Controles de Nota y Cantidad en una sola línea fina -->
-          <div style="flex: 3; display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
-            <input type="text" placeholder="Nota (maduro, verde...)" value="${prodOriginal.nota || ''}" 
-              oninput="actualizarNota(${prodOriginal.id}, this.value)" 
-              style="width: 100%; max-width: 180px; padding: 4px 8px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 0.82em; color: #555; background: #fafafa; outline: none;">
-            
-            <input type="number" min="0" placeholder="0" value="${prodOriginal.cantidad || ''}" 
-              oninput="actualizarCantidad(${prodOriginal.id}, this.value)" 
-              style="width: 50px; padding: 4px 6px; border: 1px solid #dcdcdc; border-radius: 4px; text-align: center; font-size: 0.9em; font-weight: 600; color: #2c3e50; outline: none;">
-          </div>
-
-          <!-- Precio Fino -->
-          <div style="min-width: 65px; text-align: right;">
-            <span style="font-weight: 600; color: #27AE60; font-size: 0.95em;">S/. ${prodOriginal.precioEntero.toFixed(2)}</span>
-          </div>
-
-        </div>
-      `;
-    });
-    htmlFinal += `</div>`;
-  }
-  contenedor.innerHTML = htmlFinal;
+// 3. Cambiar de pestaña al hacer clic
+function cambiarGrupo(nuevoGrupo) {
+  categoriaActiva = nuevoGrupo;
+  dibujarInterfazMatriz();
 }
 
 function actualizarCantidad(id, valor) {
@@ -115,41 +148,38 @@ function actualizarNota(id, valor) {
   if(prod) prod.nota = valor.trim();
 }
 
-// 3. Crear de forma dinámica el botón flotante elegante de WhatsApp al final
+// 4. Crear e inyectar el botón flotante premium de WhatsApp
 function inyectarBotonWhatsApp() {
   if (document.getElementById('btn-whatsapp-flotante')) return;
 
   const btn = document.createElement('div');
   btn.id = 'btn-whatsapp-flotante';
-  // Estilo premium, fijo abajo a la derecha, se adapta a móviles y PC
   btn.style.cssText = `
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #25D366;
+    bottom: 25px;
+    right: 25px;
+    background: #1E8449;
     color: white;
-    padding: 12px 24px;
+    padding: 12px 22px;
     border-radius: 50px;
-    font-family: 'Segoe UI', sans-serif;
-    font-weight: 600;
     font-size: 0.95em;
-    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(30,132,73,0.4);
     cursor: pointer;
-    z-index: 99999;
+    z-index: 999999;
     display: flex;
     align-items: center;
     gap: 8px;
-    transition: transform 0.2s ease, background 0.2s ease;
+    transition: transform 0.2s ease;
   `;
   btn.innerHTML = `
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.713-1.457L0 24zm6.59-4.846c1.66.986 3.292 1.493 4.9c1.495.004 5.428-1.746 6.55-4.9.124-.347.01-.644-.066-.763-.076-.12-.247-.193-.518-.327-.271-.135-1.604-.791-1.853-.882-.249-.09-.431-.135-.615.135-.183.27-.712.893-.872 1.074-.16.181-.32.203-.591.068-.271-.134-1.144-.421-2.179-1.343-.804-.715-1.347-1.602-1.505-1.872-.159-.27-.017-.417.118-.552.122-.121.27-.32.406-.479.135-.16.181-.271.271-.452.09-.18.045-.339-.022-.474-.068-.135-.615-1.482-.843-2.029-.222-.534-.444-.46-.615-.469-.158-.008-.339-.01-.52-.01-.18 0-.475.068-.724.339-.249.271-.95 1.287-.95 3.136s1.356 3.635 1.545 3.883c.188.249 2.666 4.072 6.459 5.705.902.389 1.607.621 2.156.796.906.288 1.732.247 2.384.15.727-.108 2.234-.913 2.544-1.796.309-.882.309-1.638.217-1.796-.093-.158-.339-.249-.586-.384z"/></svg>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.713-1.457L0 24zm6.59-4.846c1.66.986 3.292 1.493 4.9c1.495.004 5.428-1.746 6.55-4.9.124-.347.01-.644-.066-.763-.076-.12-.247-.193-.518-.327-.271-.135-1.604-.791-1.853-.882-.249-.09-.431-.135-.615.135-.183.27-.712.893-.872 1.074-.16.181-.32.203-.591.068-.271-.134-1.144-.421-2.179-1.343-.804-.715-1.347-1.602-1.505-1.872-.159-.27-.017-.417.118-.552.122-.121.27-.32.406-.479.135-.16.181-.271.271-.452.09-.18.045-.339-.022-.474-.068-.135-.615-1.482-.843-2.029-.222-.534-.444-.46-.615-.469-.158-.008-.339-.01-.52-.01-.18 0-.475.068-.724.339-.249.271-.95 1.287-.95 3.136s1.356 3.635 1.545 3.883c.188.249 2.666 4.072 6.459 5.705.902.389 1.607.621 2.156.796.906.288 1.732.247 2.384.15.727-.108 2.234-.913 2.544-1.796.309-.882.309-1.638.217-1.796-.093-.158-.339-.249-.586-.384z"/></svg>
     Enviar Pedido (S/. 0.00)
   `;
   btn.onclick = enviarPedidoWhatsApp;
   document.body.appendChild(btn);
 }
 
-// 4. Actualizar el precio acumulado en el botón flotante dinámicamente
 function actualizarBotonFlotante() {
   let total = 0;
   todosLosProductos.forEach(p => {
@@ -159,21 +189,18 @@ function actualizarBotonFlotante() {
   const btn = document.getElementById('btn-whatsapp-flotante');
   if(btn) {
     btn.innerHTML = `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.713-1.457L0 24zm6.59-4.846c1.66.986 3.292 1.493 4.9c1.495.004 5.428-1.746 6.55-4.9.124-.347.01-.644-.066-.763-.076-.12-.247-.193-.518-.327-.271-.135-1.604-.791-1.853-.882-.249-.09-.431-.135-.615.135-.183.27-.712.893-.872 1.074-.16.181-.32.203-.591.068-.271-.134-1.144-.421-2.179-1.343-.804-.715-1.347-1.602-1.505-1.872-.159-.27-.017-.417.118-.552.122-.121.27-.32.406-.479.135-.16.181-.271.271-.452.09-.18.045-.339-.022-.474-.068-.135-.615-1.482-.843-2.029-.222-.534-.444-.46-.615-.469-.158-.008-.339-.01-.52-.01-.18 0-.475.068-.724.339-.249.271-.95 1.287-.95 3.136s1.356 3.635 1.545 3.883c.188.249 2.666 4.072 6.459 5.705.902.389 1.607.621 2.156.796.906.288 1.732.247 2.384.15.727-.108 2.234-.913 2.544-1.796.309-.882.309-1.638.217-1.796-.093-.158-.339-.249-.586-.384z"/></svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.713-1.457L0 24zm6.59-4.846c1.66.986 3.292 1.493 4.9c1.495.004 5.428-1.746 6.55-4.9.124-.347.01-.644-.066-.763-.076-.12-.247-.193-.518-.327-.271-.135-1.604-.791-1.853-.882-.249-.09-.431-.135-.615.135-.183.27-.712.893-.872 1.074-.16.181-.32.203-.591.068-.271-.134-1.144-.421-2.179-1.343-.804-.715-1.347-1.602-1.505-1.872-.159-.27-.017-.417.118-.552.122-.121.27-.32.406-.479.135-.16.181-.271.271-.452.09-.18.045-.339-.022-.474-.068-.135-.615-1.482-.843-2.029-.222-.534-.444-.46-.615-.469-.158-.008-.339-.01-.52-.01-.18 0-.475.068-.724.339-.249.271-.95 1.287-.95 3.136s1.356 3.635 1.545 3.883c.188.249 2.666 4.072 6.459 5.705.902.389 1.607.621 2.156.796.906.288 1.732.247 2.384.15.727-.108 2.234-.913 2.544-1.796.309-.882.309-1.638.217-1.796-.093-.158-.339-.249-.586-.384z"/></svg>
       Enviar Pedido (S/. ${total.toFixed(2)})
     `;
-    // Efecto de animación discreto al cambiar el monto
-    btn.style.transform = "scale(1.05)";
-    setTimeout(() => btn.style.transform = "scale(1)", 150);
   }
 }
 
-// 5. Armar el mensaje y disparar la API de WhatsApp
+// 5. Compilar pedido y disparar a WhatsApp
 function enviarPedidoWhatsApp() {
   const pedidoFiltrado = todosLosProductos.filter(p => p.cantidad > 0);
   
   if (pedidoFiltrado.length === 0) {
-    alert("Tu carrito está vacío. Por favor agrega la cantidad a algún producto.");
+    alert("Tu lista de pedido está vacía. Agrega cantidades primero.");
     return;
   }
   
@@ -186,19 +213,9 @@ function enviarPedidoWhatsApp() {
     totalPedido += subtotal;
     
     mensaje += `*${idx + 1}. ${p.producto}* (${p.medida.toLowerCase()})\n`;
-    mensaje += `   Cantidad: *${p.cantidad}* x S/. ${p.precioEntero.toFixed(2)}\n`;
-    if(p.nota) {
-      mensaje += `   📝 _Nota: ${p.nota}_\n`;
-    }
+    mensaje += `   Cantidad: *${p.cantidad}* | S/. ${p.precioEntero.toFixed(2)}\n`;
+    if(p.nota) mensaje += `   📝 _Nota: ${p.nota}_\n`;
     mensaje += `   Subtotal: *S/. ${subtotal.toFixed(2)}*\n`;
     mensaje += `--------------------------------\n`;
   });
   
-  mensaje += `\n💰 *TOTAL NETO ESTIMADO: S/. ${totalPedido.toFixed(2)}*`;
-  
-  const urlWhatsApp = `https://whatsapp.com{NÚMERO_WHATSAPP}&text=${encodeURIComponent(mensaje)}`;
-  window.open(urlWhatsApp, '_blank');
-}
-
-// Buscador optimizado para la barra superior
-function filtrar() {
