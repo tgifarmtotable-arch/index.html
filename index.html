@@ -18,11 +18,14 @@ const NÚMERO_WHATSAPP = "51917764281";
 // 1. Descarga desde la API de Google Sheets leyendo columna F (Entero) y L (Fracción)
 function cargarWebMatriz() {
   // Solicitamos las columnas A(Categoría), B(Producto), C(Medida), F(Precio Entero), L(Precio Fracción)
+  // 1. Descarga desde la API de Google Sheets leyendo columna F (Entero) y L (Fracción)
+function cargarWebMatriz() {
+  
   const urlJSON = "https://google.com";
-
 
   fetch(urlJSON)
     .then(res => res.text())
+
     .then(texto => {
       const jsonLimpio = JSON.parse(texto.substring(47, texto.length - 2));
       const filas = jsonLimpio.table.rows;
