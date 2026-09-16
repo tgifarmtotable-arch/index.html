@@ -3,159 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TGI, CALIDAD sin salir de casa - Catálogo Comercial</title>
+    <title>Distribuidora TGI - Pedidos Rápidos</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #fafafa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
 
-    <!-- CONTENEDOR PRINCIPAL MINIMALISTA -->
-    <div style="max-width: 600px; margin: 0 auto; padding: 15px; background: #ffffff; min-height: 100vh; box-shadow: 0 0 10px rgba(0,0,0,0.02);">
+    <!-- CONTENEDOR MINIMALISTA PREMIUM -->
+    <div style="max-width: 550px; margin: 0 auto; padding: 20px 15px; background: #ffffff; min-height: 100vh; box-sizing: border-box; position: relative;">
         
-        <!-- ENCABEZADO -->
-        <div style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #f0f0f0; padding-bottom: 15px;">
-            <h1 style="font-size: 1.5em; color: #1E8449; margin: 0 0 5px 0; font-weight: 700; letter-spacing: 0.5px;">DISTRIBUIDORA TGI</h1>
-            <p style="font-size: 0.85em; color: #7f8c8d; margin: 0;">Selecciona tus productos y envía tu lista por WhatsApp</p>
+        <!-- CABECERA -->
+        <div style="text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9;">
+            <h1 style="font-size: 1.6em; color: #1E8449; margin: 0 0 4px 0; font-weight: 700; letter-spacing: 0.5px;">DISTRIBUIDORA TGI</h1>
+            <p style="font-size: 0.85em; color: #64748b; margin: 0; font-weight: 500;">Tu mercado fresco a un clic de distancia</p>
         </div>
 
-        <!-- BARRA DE PESTAÑAS POR GRUPOS -->
-        <div id="tgi-pestañas" style="display: flex; gap: 8px; overflow-x: auto; padding: 5px 2px 12px 2px; margin-bottom: 15px; border-bottom: 1px solid #f5f5f5; scrollbar-width: none; -webkit-overflow-scrolling: touch;">
-            <!-- Las pestañas se crean solas -->
+        <!-- PESTAÑAS HORIZONTALES AUTOMÁTICAS -->
+        <div id="tgi-pestañas" style="display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 12px 2px; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+            <!-- Se generan solas -->
         </div>
 
-        <!-- BUSCADOR RÁPIDO -->
-        <div style="margin-bottom: 15px;">
-            <input type="text" id="tgi-buscador" oninput="filtrarProductos()" placeholder="🔍 Buscar producto en este grupo..." style="width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 0.9em; box-sizing: border-box; outline: none; background: #fafafa;">
+        <!-- LISTADO DE PRODUCTOS ULTRA COMPACTO -->
+        <div id="contenedor-productos" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 100px;">
+            <p style="text-align: center; color: #94a3b8; font-size: 0.9em; padding: 40px 0;">Sincronizando catálogo con la WEB MATRIZ...</p>
         </div>
 
-        <!-- LISTADO DE PRODUCTOS -->
-        <div id="contenedor-productos" style="display: flex; flex-direction: column; gap: 6px;">
-            <p style="text-align: center; color: #95a5a6; font-size: 0.9em; padding: 40px 0;">Cargando catálogo oficial...</p>
+        <!-- BARRA INFERIOR DE RESUMEN FIJA (Elegante y no estorba) -->
+        <div id="barra-resumen" style="position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 550px; background: #ffffff; box-shadow: 0 -4px 20px rgba(0,0,0,0.06); padding: 12px 20px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; z-index: 9999;">
+            <div style="text-align: left; line-height: 1.3;">
+                <span style="font-size: 0.8em; color: #64748b; font-weight: 600; display: block;" id="txt-peso-total">Kilos: 0.00 kg</span>
+                <span style="font-size: 0.8em; color: #64748b; font-weight: 600; display: block;" id="txt-delivery">Delivery: S/. 0.00</span>
+                <span style="font-size: 1.1em; font-weight: 700; color: #1e293b;">Total: <span id="txt-total-general" style="color: #27AE60;">S/. 0.00</span></span>
+            </div>
+            <button onclick="enviarWhatsApp()" style="background: #1E8449; color: #ffffff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 0.95em; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(30,132,73,0.25);">
+                Pedir por WhatsApp ➔
+            </button>
         </div>
+
     </div>
 
-    <!-- SCRIPT DE OPERACIÓN COMERCIAL -->
     <script>
     let todosLosProductos = [];
     let grupoSeleccionado = "";
     const NÚMERO_WHATSAPP = "51917764281";
 
-    // 1. Conexión limpia y directa mediante JSONP (Salva el bloqueo de GitHub Pages)
-    function cargarWebMatriz() {
-      const urlJSON = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbPkbgiCxe2RMmyLOrObjSI7yG6u9sszjPvC0BM8mKb3S4Q_lhZLqAaOdAhFW6glpChhoWvdYpHan7/pub?gid=1523459015&single=true&output=csv";
-
-      fetch(urlJSON)
-        .then(res => res.text())
-        .then(texto => {
-          // Limpieza del texto JSON que entrega Google
-          const inicio = texto.indexOf("{");
-          const fin = texto.lastIndexOf("}");
-          const jsonLimpio = JSON.parse(texto.substring(inicio, fin + 1));
-          const filas = jsonLimpio.table.rows;
-          
-          todosLosProductos = [];
-          
-          filas.forEach((fila, index) => {
-            const c = fila.c;
-            // Validamos que la fila tenga datos reales en Categoría (A) y Producto (B)
-            if (c && c[0] && c[0].v && c[1] && c[1].v) {
-              todosLosProductos.push({
-                id: index,
-                categoria: c[0].v.toString().trim(), // Columna A
-                producto: c[1].v.toString().trim(),  // Columna B
-                medida: c[2] ? c[2].v.toString().trim() : "UNID", // Columna C
-                precioEntero: parseFloat(c[5] ? c[5].v : 0) || 0,   // Columna F
-                precioFraccion: parseFloat(c[11] ? c[11].v : 0) || 0, // Columna L
-                cantidad: 0,
-                nota: ""
-              });
-            }
-          });
-
-          if (todosLosProductos.length > 0) {
-            grupoSeleccionado = todosLosProductos[0].categoria;
-          }
-          
-          reconstruirPantalla();
-          crearBotonWhatsApp();
-        })
-        .catch(err => {
-          document.getElementById('contenedor-productos').innerHTML = "<p style='text-align:center; color:#c0392b; font-size:0.9em; padding:20px;'>⚠️ Error de enlace. Verifica que tu Google Sheets esté publicado en la web.</p>";
-        });
+    // Lector seguro de CSV para saltar las restricciones de red de GitHub Pages
+    function separarCamposCSV(textoFila) {
+        const celdas = [];
+        let enComillas = false;
+        let acumulador = "";
+        for (let i = 0; i < textoFila.length; i++) {
+            let char = textoFila[i];
+            if (char === '"') { enComillas = !enComillas; }
+            else if (char === ',' && !enComillas) { celdas.push(acumulador.trim()); acumulador = ""; }
+            else { acumulador += char; }
+        }
+        celdas.push(acumulador.trim());
+        return celdas;
     }
 
-    // 2. Renderizado de interfaz minimalista y compacta
-    function reconstruirPantalla(productosAFiltrar = null) {
+    // 1. Descarga automática de la lista comercial
+    async function cargarWebMatriz() {
+      const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbPkbgiCxe2RMmyLOrObjSI7yG6u9sszjPvC0BM8mKb3S4Q_lhZLqAaOdAhFW6glpChhoWvdYpHan7/pub?gid=1523459015&single=true&output=csv";
+      
+      try {
+        const res = await fetch(urlCSV);
+        const cuerpo = await res.text();
+        const lineas = cuerpo.split(/\r?\n/);
+        
+        todosLosProductos = [];
+        
+        for (let i = 1; i < lineas.length; i++) {
+          if (!lineas[i].trim()) continue;
+          
+          const columnas = separarCamposCSV(lineas[i]);
+          
+          if (columnas.length >= 12) {
+            todosLosProductos.push({
+              id: i,
+              categoria: columnas[0], // Columna A
+              producto: columnas[1],  // Columna B
+              medida: columnas[2] ? columnas[2].toUpperCase() : "KILO", // Columna C
+              precioEntero: parseFloat(columnas[5]) || 0,   // Columna F
+              precioFraccion: parseFloat(columnas[11]) || 0, // Columna L
+              cantidad: 0,
+              nota: ""
+            });
+          }
+        }
+
+        if (todosLosProductos.length > 0) {
+          grupoSeleccionado = todosLosProductos[0].categoria;
+        }
+        
+        reconstruirPantalla();
+      } catch (err) {
+        document.getElementById('contenedor-productos').innerHTML = "<p style='text-align:center; color:#ef4444; font-size:0.9em; padding:20px;'>⚠️ Error de sincronización. Comprueba que el Excel esté publicado.</p>";
+      }
+    }
+
+    // 2. Dibujar pantalla compacta premium
+    function reconstruirPantalla() {
       const divPestañas = document.getElementById('tgi-pestañas');
       const divProductos = document.getElementById('contenedor-productos');
       if (!divProductos) return;
 
-      // Generar pestañas de grupos únicos
-      const grupos = [...new Set(todosLosProductos.map(p => p.categoria))];
+      const gruposUnicos = [...new Set(todosLosProductos.map(p => p.categoria))];
 
       if (divPestañas) {
-        divPestañas.innerHTML = grupos.map(g => {
-          const activo = g === grupoSeleccionado;
+        divPestañas.innerHTML = gruposUnicos.map(g => {
+          const esActivo = g === grupoSeleccionado;
           return `
             <button onclick="cambiarDeGrupo('${g}')" style="
               padding: 6px 14px;
-              background: ${activo ? '#1E8449' : '#f5f5f5'};
-              color: ${activo ? '#ffffff' : '#555555'};
+              background: ${esActivo ? '#1E8449' : '#f1f5f9'};
+              color: ${esActivo ? '#ffffff' : '#475569'};
               border: none;
               border-radius: 20px;
               font-size: 0.82em;
               font-weight: 600;
               cursor: pointer;
               white-space: nowrap;
-              transition: all 0.1s ease;
             ">${g}</button>
           `;
         }).join('');
       }
 
-      // Filtrar el listado según el grupo activo o la búsqueda
-      const filtrados = productosAFiltrar || todosLosProductos.filter(p => p.categoria === grupoSeleccionado);
+      const listaProductosGrupo = todosLosProductos.filter(p => p.categoria === grupoSeleccionado);
 
       let html = "";
-      filtrados.forEach(p => {
-        // Lógica visual: Si tiene precio de fracción en Excel, muestra ambos, si no, solo el entero
-        const muestraPrecio = p.precioFraccion > 0 
-          ? `<span style="font-weight:700; color:#1E8449; font-size:0.95em;">S/. ${p.precioEntero.toFixed(2)}</span><br><span style="font-size:0.75em; color:#7f8c8d;">½: S/. ${p.precioFraccion.toFixed(2)}</span>`
-          : `<span style="font-weight:700; color:#1E8449; font-size:0.95em;">S/. ${p.precioEntero.toFixed(2)}</span>`;
+      listaProductosGrupo.forEach(p => {
+        const visualPrecio = p.precioFraccion > 0 
+          ? `<span style="font-weight:700; color:#1E8449; font-size:0.92em;">S/. ${p.precioEntero.toFixed(2)}</span><br><span style="font-size:0.75em; color:#64748b;">½: S/. ${p.precioFraccion.toFixed(2)}</span>`
+          : `<span style="font-weight:700; color:#1E8449; font-size:0.92em;">S/. ${p.precioEntero.toFixed(2)}</span>`;
 
         html += `
-          <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #f9f9f9; font-size: 0.9em; gap: 10px; background: #fff;">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 6px; border-bottom: 1px solid #f1f5f9; font-size: 0.9em; gap: 10px; background: #fff;">
             
-            <!-- Detalle de Producto -->
-            <div style="flex: 2; text-align: left; min-width: 120px;">
-              <b style="color: #2c3e50; font-size: 0.95em; display: block;">${p.producto}</b>
-              <span style="color: #95a5a6; font-size: 0.78em; font-weight: 500;">Medida: ${p.medida.toUpperCase()}</span>
+            <div style="flex: 2; text-align: left;">
+              <b style="color: #1e293b; font-size: 0.92em; display: block; line-height:1.2;">${p.producto}</b>
+              <span style="color: #94a3b8; font-size: 0.75em; font-weight: 500;">Medida: ${p.medida}</span>
             </div>
             
-            <!-- Entradas de Datos (Nota + Cantidad) -->
             <div style="flex: 3; display: flex; align-items: center; gap: 6px; justify-content: flex-end;">
-              <input type="text" placeholder="Nota: maduro, pinto..." value="${p.nota}" 
+              <input type="text" placeholder="Nota: pinto, verde..." value="${p.nota}" 
                 oninput="guardarNota(${p.id}, this.value)" 
-                style="width: 100%; max-width: 130px; padding: 5px 8px; border: 1px solid #e0e0e0; border-radius: 5px; font-size: 0.8em; color: #555; background: #fafafa; outline: none;">
+                style="width: 100%; max-width: 125px; padding: 5px 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.8em; color: #334155; background: #f8fafc; outline: none;">
               
               <input type="number" min="0" step="any" placeholder="0" value="${p.cantidad || ''}" 
                 oninput="guardarCantidad(${p.id}, this.value)" 
-                style="width: 50px; padding: 5px; border: 1px solid #cccccc; border-radius: 5px; text-align: center; font-size: 0.88em; font-weight: bold; color: #2c3e50; outline: none;">
+                style="width: 48px; padding: 5px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center; font-size: 0.88em; font-weight: bold; color: #1e293b; outline: none;">
             </div>
 
-            <!-- Columna de Precios -->
             <div style="min-width: 75px; text-align: right; line-height: 1.1;">
-              ${muestraPrecio}
+              ${visualPrecio}
             </div>
 
           </div>
         `;
       });
 
-      divProductos.innerHTML = html || "<p style='text-align:center; color:#999; padding:20px;'>No se encontraron productos.</p>";
+      divProductos.innerHTML = html;
     }
 
     function cambiarDeGrupo(nombre) {
       grupoSeleccionado = nombre;
-      document.getElementById('tgi-buscador').value = ""; // Limpiar buscador al cambiar pestaña
       reconstruirPantalla();
     }
 
@@ -163,7 +173,7 @@
       const p = todosLosProductos.find(prod => prod.id === id);
       if (p) {
         p.cantidad = parseFloat(val) || 0;
-        actualizarSumaBoton();
+        calcularTotalesFlotantes();
       }
     }
 
@@ -172,53 +182,34 @@
       if (p) p.nota = val.trim();
     }
 
-    // 3. Función matemática comercial exacta (Fracciona si el producto lo amerita)
+    // 3. Lógica matemática de Cobro Comercial (Entero / Fracción)
     function calcularSubtotalProducto(p) {
       if (p.cantidad <= 0) return 0;
+      if (p.precioFraccion === 0) return p.cantidad * p.precioEntero;
 
-      // Si no tiene precio de fracción en el Excel (columna L en 0 o vacía), calcula todo con el entero normal
-      if (p.precioFraccion === 0) {
-        return p.cantidad * p.precioEntero;
-      }
-
-      // Separamos los enteros (1, 2, 3...) de los decimales (0.5)
       const parteEntera = Math.floor(p.cantidad); 
       const parteFraccion = p.cantidad - parteEntera; 
 
       const costoEntero = parteEntera * p.precioEntero;
-      
-      // Si el cliente pide una fracción (como 0.5), el sistema le asigna el valor exacto de la columna L
       const costoFraccion = (parteFraccion / 0.5) * p.precioFraccion; 
 
       return costoEntero + costoFraccion;
     }
 
-    // 4. Crear el Botón Flotante Elegante de WhatsApp para enviar la lista
-    function crearBotonWhatsApp() {
-      if (document.getElementById('btn-whatsapp-tgi')) return;
+    // 4. Calcular pesos y tarifas de delivery en tiempo real
+    function calcularTotalesFlotantes() {
+      let subtotalProductos = 0;
+      let pesoTotalKilos = 0;
 
-      const btn = document.createElement('div');
-      btn.id = 'btn-whatsapp-tgi';
-      btn.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: #1E8449;
-        color: white;
-        padding: 12px 22px;
-        border-radius: 30px;
-        font-size: 0.9em;
-        font-weight: bold;
-        box-shadow: 0 4px 15px rgba(30,132,73,0.3);
-        cursor: pointer;
-        z-index: 99999;
-        font-family: sans-serif;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      `;
-      btn.innerHTML = `🛒 Enviar Pedido (S/. 0.00) `;
-      btn.onclick = enviarWhatsApp;
-      document.body.appendChild(btn);
-    }
+      todosLosProductos.forEach(p => {
+        subtotalProductos += calcularSubtotalProducto(p);
+        // Sumar peso solo si la medida del producto se vende por KILO o KG
+        if (p.cantidad > 0 && (p.medida === "KILO" || p.medida === "KG")) {
+            pesoTotalKilos += p.cantidad;
+        }
+      });
 
+      // Regla de negocio del Delivery:
+      let costoDelivery = 0;
+      if (pesoTotalKilos > 0 && pesoTotalKilos <= 6) {
+          costoDelivery = 4.99;
