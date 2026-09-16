@@ -3,23 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedido Mayorista - TGI</title>
+    <title>Pedidos Inteligentes - TGI</title>
     <style>
         :root { --verde-tgi: #1b5e20; --accent: #2e7d32; --gris: #f8f9fa; }
         body { font-family: system-ui, -apple-system, sans-serif; margin:0; padding:0; background: var(--gris); color: #222; }
         header { background: var(--verde-tgi); color: white; padding: 15px; text-align: center; position: sticky; top:0; z-index:100; }
-        .nav-secciones { display: flex; gap: 5px; background: white; padding: 10px; overflow-x: auto; position: sticky; top: 68px; z-index: 90; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .btn-seccion { background: #eee; border:none; padding: 10px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; white-space: nowrap; }
-        .btn-seccion.active { background: var(--accent); color: white; }
-        .container { max-width: 600px; margin: 20px auto; padding: 0 15px; padding-bottom: 120px; }
-        .seccion-contenido { display: none; }
-        .seccion-contenido.active { display: block; }
-        .card { background: white; padding: 12px; margin-bottom: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); display: flex; align-items: center; justify-content: space-between; }
-        .info { flex-grow: 1; }
-        .nombre { font-weight: bold; font-size: 1.05rem; }
-        .precio { color: #666; font-size: 0.85rem; margin-top: 2px; }
-        select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; width: 130px; font-size: 0.9rem; }
-        .footer-total { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -3px 10px rgba(0,0,0,0.1); text-align: center; }
+        .buscador-box { position: sticky; top: 68px; background: var(--gris); padding: 10px 15px; z-index: 90; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        #inputBuscador { width: 100%; padding: 12px; border-radius: 25px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem; }
+        .container { max-width: 600px; margin: 15px auto; padding: 0 15px; padding-bottom: 120px; }
+        
+        /* Tarjetas con alertas de color basadas en tu Excel */
+        .card { background: white; padding: 15px; margin-bottom: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-left: 6px solid #ccc; }
+        .card.bajo { border-left-color: #2e7d32; background: #e8f5e9; } /* Verde - Bajó */
+        .card.subio { border-left-color: #fbc02d; background: #fffde7; } /* Amarillo - Subió */
+        .card.congelado { border-left-color: #0288d1; background: #e1f5fe; } /* Azul - Se mantiene */
+        
+        .etiqueta-estado { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; display: inline-block; padding: 2px 6px; border-radius: 4px; margin-bottom: 5px; }
+        .bajo .etiqueta-estado { background: #2e7d32; color: white; }
+        .subio .etiqueta-estado { background: #fbc02d; color: #333; }
+        .congelado .etiqueta-estado { background: #0288d1; color: white; }
+
+        .producto-fila { display: flex; align-items: center; justify-content: space-between; }
+        .info { flex-grow: 1; padding-right: 10px; }
+        .nombre { font-weight: bold; font-size: 1.05rem; text-transform: uppercase; }
+        .precio { color: #555; font-size: 0.85rem; margin-top: 2px; }
+        select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; width: 140px; font-size: 0.9rem; background: white; }
+        .nota-cliente { width: 100%; margin-top: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; display: none; }
+        
+        .footer-total { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -3px 10px rgba(0,0,0,0.1); text-align: center; z-index: 100; }
         .btn-enviar { background: #25d366; color: white; border: none; padding: 12px; width: 100%; max-width: 500px; font-size: 1.1rem; font-weight: bold; border-radius: 25px; cursor: pointer; }
         .cliente-input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; box-sizing: border-box; }
     </style>
@@ -31,87 +42,134 @@
     <p>Pre-Pedido de Carga Diario</p>
 </header>
 
-<div class="nav-secciones">
-    <button class="btn-seccion active" onclick="cambiarSeccion('pollo', this)">🍗 Pollo Fresco</button>
-    <button class="btn-seccion" onclick="cambiarSeccion('frutas', this)">🍓 Frutas</button>
-    <button class="btn-seccion" onclick="cambiarSeccion('verduras', this)">🥦 Verduras</button>
-    <button class="btn-seccion" onclick="cambiarSeccion('complementos', this)">📦 Complementos</button>
+<div class="buscador-box">
+    <input type="text" id="inputBuscador" placeholder="🔍 Buscar producto (ej: ají, pollo, acelga)..." oninput="filtrar()">
 </div>
 
 <div class="container">
     <input type="text" id="nombreCliente" class="cliente-input" placeholder="👤 Escribe tu Nombre o Negocio (Obligatorio)">
-
-    <!-- SECCIÓN POLLO -->
-    <div id="pollo" class="seccion-contenido active">
-        <div class="card" data-p="Pollo Entero" data-pr="3.50">
-            <div class="info"><div class="nombre">Pollo Entero c/Menudencia</div><div class="precio">$3.50 / Kg (Aprox)</div></div>
-            <select onchange="calcular()"><option value="0">No llevar</option><option value="1">1 Unidad</option><option value="3">3 Unidades</option><option value="5">5 Unidades</option></select>
-        </div>
-        <div class="card" data-p="Pechuga de Pollo" data-pr="5.80">
-            <div class="info"><div class="nombre">Pechuga de Pollo Fileteada</div><div class="precio">$5.80 / Kg</div></div>
-            <select onchange="calcular()"><option value="0">No llevar</option><option value="0.5">0.5 Kg</option><option value="1">1 Kg</option><option value="2">2 Kg</option></select>
-        </div>
-    </div>
-
-    <!-- SECCIÓN FRUTAS -->
-    <div id="frutas" class="seccion-contenido">
-        <div class="card" data-p="Mandarina" data-pr="2.20">
-            <div class="info"><div class="nombre">🍊 Mandarina de Estación</div><div class="precio">$2.20 / Kg</div></div>
-            <select onchange="calcular()"><option value="0">No llevar</option><option value="0.5">0.5 Kg</option><option value="1">1 Kg</option><option value="2">2 Kg</option><option value="5">5 Kg</option></select>
-        </div>
-    </div>
-
-    <!-- SECCIÓN VERDURAS -->
-    <div id="verduras" class="seccion-contenido">
-        <div class="card" data-p="Tomate" data-pr="1.90">
-            <div class="info"><div class="nombre">🥦 Tomate Maratón</div><div class="precio">$1.90 / Kg</div></div>
-            <select onchange="calcular()"><option value="0">No llevar</option><option value="0.5">0.5 Kg</option><option value="1">1 Kg</option><option value="2">2 Kg</option></select>
-        </div>
-    </div>
-
-    <!-- SECCIÓN COMPLEMENTOS -->
-    <div id="complementos" class="seccion-contenido">
-        <div class="card" data-p="Huevo Jaba" data-pr="4.50">
-            <div class="info"><div class="nombre">🥚 Jaba de Huevos (30 unidades)</div><div class="precio">$4.50 / Jaba</div></div>
-            <select onchange="calcular()"><option value="0">No llevar</option><option value="1">1 Jaba</option><option value="2">2 Jabas</option></select>
-        </div>
-    </div>
+    <div id="catalogo">Conectando con tu lista de precios en vivo...</div>
 </div>
 
 <div class="footer-total">
-    <div style="font-weight: bold; margin-bottom: 8px;">Total Estimado: $<span id="total">0.00</span></div>
-    <button class="btn-enviar" onclick="enviar()">📱 Enviar Pre-Pedido</button>
+    <div style="font-weight: bold; margin-bottom: 8px;">Total Estimado: S/. <span id="total">0.00</span></div>
+    <button class="btn-enviar" onclick="enviarPedido()">📱 Enviar Lista por WhatsApp</button>
 </div>
 
 <script>
-    function cambiarSeccion(id, btn) {
-        document.querySelectorAll('.seccion-contenido').forEach(e => e.classList.remove('active'));
-        document.querySelectorAll('.btn-seccion').forEach(e => e.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        btn.classList.add('active');
+    // ⚠️ CONFIGURACIÓN CLAVE: REEMPLAZA ESTOS DOS DATOS
+    const URL_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQchkb5a-PIZNgWkAco6eSXKwaP_1ql7hvnOEhVCJ4FHdD-sLbTUlGmRlEonqgAEdpPwe3oQD_9rQil/pub?output=csv"; 
+    const TELEFONO = "51917764281"; 
+
+    let productosDatos = [];
+
+    async function cargarExcel() {
+        try {
+            const res = await fetch(URL_CSV);
+            const data = await res.text();
+            const filas = data.split("\n").slice(1);
+            productosDatos = [];
+
+            filas.forEach((fila, idx) => {
+                const col = fila.split(",");
+                if(col.length >= 3 && col[0].trim() !== "") {
+                    productosDatos.push({
+                        id: idx,
+                        producto: col[0].trim(),
+                        medida: col[1].trim(),
+                        p_entero: parseFloat(col[4]) || 0,
+                        p_fraccion: parseFloat(col[10]) || null,
+                        p_mayorista: parseFloat(col[5]) || null,
+                        estado: col[11] ? col[11].trim().toLowerCase() : "congelado"
+                    });
+                }
+            });
+            renderizar(productosDatos);
+        } catch (e) {
+            document.getElementById("catalogo").innerText = "Sincronizando con la matriz... Asegúrate de publicar el archivo.";
+        }
     }
-    function calcular() {
+
+    function renderizar(lista) {
+        const cat = document.getElementById("catalogo");
+        cat.innerHTML = "";
+        
+        lista.forEach((p) => {
+            let opcionFraccion = p.p_fraccion ? `<option value="0.5" data-p="${p.p_fraccion}">1/2 ${p.medida.toLowerCase()} (S/. ${p.p_fraccion.toFixed(2)})</option>` : "";
+            let txtEtiqueta = p.estado === "bajo" ? "🔥 ¡En Oferta!" : (p.estado === "subio" ? "⚠️ Ajuste de mercado" : "❄️ Precio Congelado");
+
+            cat.innerHTML += `
+                <div class="card ${p.estado}" data-nom="${p.producto.toLowerCase()}">
+                    <span class="etiqueta-estado">${txtEtiqueta}</span>
+                    <div class="producto-fila">
+                        <div class="info">
+                            <div class="nombre">${p.producto}</div>
+                            <div class="precio">S/. ${p.p_entero.toFixed(2)} por ${p.medida.toLowerCase()}</div>
+                        </div>
+                        <select id="sel-${p.id}" onchange="controlarCambio(${p.id})">
+                            <option value="0" data-p="0">No llevar</option>
+                            ${opcionFraccion}
+                            <option value="1" data-p="${p.p_entero}">1 ${p.medida.toLowerCase()}</option>
+                            <option value="2" data-p="${p.p_mayorista ? p.p_mayorista * 2 : p.p_entero * 2}">2 ${p.medida.toLowerCase()}${p.p_mayorista ? ' (S/. ' + p.p_mayorista.toFixed(2) + ' c/u)' : ''}</option>
+                            <option value="3" data-p="${p.p_mayorista ? p.p_mayorista * 3 : p.p_entero * 3}">3 ${p.medida.toLowerCase()}</option>
+                            <option value="5" data-p="${p.p_mayorista ? p.p_mayorista * 5 : p.p_entero * 5}">5 ${p.medida.toLowerCase()}</option>
+                        </select>
+                    </div>
+                    <input type="text" id="nota-${p.id}" class="nota-cliente" placeholder="✍️ Nota (ej: maduro, verde, grande...)">
+                </div>`;
+        });
+    }
+
+    function controlarCambio(id) {
+        const selector = document.getElementById(`sel-${id}`);
+        const inputNota = document.getElementById(`nota-${id}`);
+        inputNota.style.display = selector.value !== "0" ? "block" : "none";
+        if(selector.value === "0") inputNota.value = "";
+        calcularTotal();
+    }
+
+    function calcularTotal() {
         let t = 0;
-        document.querySelectorAll('.card').forEach(c => {
-            let cant = parseFloat(c.querySelector('select').value);
-            let precio = parseFloat(c.getAttribute('data-pr'));
-            t += cant * precio;
+        productosDatos.forEach((p) => {
+            const sel = document.getElementById(`sel-${p.id}`);
+            const opt = sel.options[sel.selectedIndex];
+            t += parseFloat(opt.getAttribute("data-p")) || 0;
         });
-        document.getElementById('total').innerText = t.toFixed(2);
+        document.getElementById("total").innerText = t.toFixed(2);
     }
-    function enviar() {
-        let nom = document.getElementById('nombreCliente').value.trim();
-        if(!nom) return alert("Por favor ingresa tu nombre");
-        
-        // FORMATO DE CADENA EXCLUSIVO PARA TU BASE DE DATOS
-        let msg = `DATA_TGI|Cliente:${nom}\n`;
-        document.querySelectorAll('.card').forEach(c => {
-            let cant = parseFloat(c.querySelector('select').value);
-            if(cant > 0) msg += `${c.getAttribute('data-p')}:${cant}\n`;
+
+    function filtrar() {
+        const bus = document.getElementById("inputBuscador").value.toLowerCase();
+        document.querySelectorAll(".card").forEach(c => {
+            c.style.display = c.getAttribute("data-nom").includes(bus) ? "block" : "none";
         });
-        
-        window.open(`https://whatsapp.com{encodeURIComponent(msg)}`, '_blank');
     }
+
+    function enviarPedido() {
+        let cliente = document.getElementById("nombreCliente").value.trim();
+        if(!cliente) return alert("Por favor, ingresa tu nombre.");
+
+        let msg = `*NUEVO PRE-PEDIDO FRESCO TGI*\n*Cliente:* ${cliente}\n=========================\n\n`;
+        let tieneItems = false;
+
+        productosDatos.forEach((p) => {
+            const sel = document.getElementById(`sel-${p.id}`);
+            if(sel.value !== "0") {
+                tieneItems = true;
+                const textoCant = sel.options[sel.selectedIndex].text.split(" (");
+                const nota = document.getElementById(`nota-${p.id}`).value.trim();
+                msg += `• [ ] ${p.producto} -> Cantidad: ${textoCant[0]}\n`;
+                if(nota) msg += `      _Nota: ${nota}_\n`;
+            }
+        });
+
+        if(!tieneItems) return alert("Selecciona algún producto.");
+        msg += `\n=========================\n*Total Estimado:* S/. ${document.getElementById("total").innerText}\n⏰ Pesaje real a las 3:00 AM.`;
+
+        window.open(`https://whatsapp.com{TELEFONO}&text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    window.onload = cargarExcel;
 </script>
 </body>
 </html>
