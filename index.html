@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distribuidora TGI - Pedidos en Vivo</title>
+    <title>TGI - Pedidos</title>
     <style>
         :root {
             --bg-color: #f9f9f9;
@@ -18,7 +18,7 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding-bottom: 140px; /* Ajustado para dar espacio a la barra inferior */
+            padding-bottom: 140px;
         }
         .header-negocio {
             text-align: center;
@@ -160,9 +160,8 @@
 <body>
 
     <div class="header-negocio">
-        <h1>Distribuidora TGI</h1>
-        <p>Tu mercado fresco a un clic de distancia</p>
-        <!-- Tu número de WhatsApp ahora es visible debajo del título principal -->
+        <h1>TGI</h1>
+        <p>CALIDAD sin salir de casa</p>
         <div class="whatsapp-visible">Pedir al: +51 917 764 281</div>
     </div>
 
@@ -172,7 +171,7 @@
     </div>
 
     <div class="container">
-        <div id="loading" class="loading">Cargando productos desde la matriz...</div>
+        <div id="loading" class="loading">Cargando productos en vivo...</div>
         <div id="verduras" class="categoria-contenido active"></div>
         <div id="frutas" class="categoria-contenido"></div>
     </div>
@@ -187,49 +186,36 @@
     </div>
 
 <script>
-    // ⚠️ REEMPLAZA ESTE ENLACE DE EJEMPLO POR TU PROPIO LINK DE GOOGLE SHEETS EN FORMATO CSV
-    const URL_MATRIZ = "https://script.google.com/macros/s/AKfycbyCU0_aT_yQfe0BfrOCmnn53FPWVtuIPlHBhekchW7GrRS1DyANVthGoBKgNp9z9tlUpw/exec";
+    // ⚠️ REEMPLAZA EL TEXTO DE ABAJO CON TU ENLACE /exec DEL PASO 1
+    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxClTCrnjtbeWLiogi4ZM6yLmB-FRAvqG4ytkVrkzPR-aoYYSD-rLr9-asLxzun0U0X/exec";
 
     async function consumirMatriz() {
         try {
-            const respuesta = await fetch(URL_MATRIZ);
-            const textoCSV = await respuesta.text();
-            procesarDatos(textoCSV);
+            const respuesta = await fetch(URL_SCRIPT);
+            const productos = await respuesta.json();
+            procesarDatos(productos);
             document.getElementById('loading').style.display = 'none';
         } catch (error) {
-            console.error("Error cargando la matriz web:", error);
-            document.getElementById('loading').innerText = "Error de conexión. Verifica que el enlace de publicación sea correcto.";
+            console.error("Error conectando con Apps Script:", error);
+            document.getElementById('loading').innerText = "Error al conectar con Google Sheets.";
         }
     }
 
-    function procesarDatos(csv) {
-        const lineas = csv.split("\n");
+    function procesarDatos(productos) {
         const contenedorVerduras = document.getElementById('verduras');
         const contenedorFrutas = document.getElementById('frutas');
 
-        // Limpiar contenedores por si acaso
         contenedorVerduras.innerHTML = "";
         contenedorFrutas.innerHTML = "";
 
-        for (let i = 1; i < lineas.length; i++) {
-            if (!lineas[i].trim()) continue;
-            
-            // 🛠️ DETECCIÓN AUTOMÁTICA DE SEPARADOR: Detecta si tu Excel usa comas (,) o punto y coma (;)
-            let columnas = [];
-            if (lineas[i].includes(";")) {
-                columnas = lineas[i].split(";");
-            } else {
-                columnas = lineas[i].split(",");
-            }
-            
-            // Mapeo exacto según tu captura de pantalla de Excel
-            const categoria = columnas[0] ? columnas[0].trim().toUpperCase() : ""; // Columna A
-            const producto = columnas[1] ? columnas[1].trim() : "";               // Columna B
-            const medida = columnas[2] ? columnas[2].trim() : "";                 // Columna C
-            const precioEntero = columnas[5] ? parseFloat(columnas[5].replace(",", ".")) : 0;  // Columna F (PRECIO FINAL ENTERO)
-            const precioFraccion = columnas[11] ? parseFloat(columnas[11].replace(",", ".")) : 0; // Columna L (PRECIO FINAL FRACCION)
-            
-            if (!producto || producto === "PRODUCTO") continue;
+        productos.forEach(prod => {
+            const categoria = prod.categoria || "";
+            const producto = prod.producto || "";
+            const medida = prod.medida || "";
+            const precioEntero = prod.precioEntero || 0;
+            const precioFraccion = prod.precioFraccion || 0;
+
+            if (!producto || producto === "PRODUCTO") return;
 
             const esPollo = producto.toUpperCase().includes("POLLO ENTERO");
             let txtFraccion = medida.toUpperCase() === "ATADO" ? "Medio Atado" : "Medio Kilo";
@@ -269,3 +255,30 @@
                         <span class="producto-nombre">${producto}</span>
                         <div class="producto-precios">${precioDetalle}</div>
                     </div>
+                    <div class="opciones-seleccion">
+                        <select class="select-opcion" onchange="calcularPedido()">
+                            ${opcionesHTML}
+                        </select>
+                    </div>
+                    <input type="text" class="input-nota" placeholder="Notas (maduro, pintón, etc.)..." oninput="calcularPedido()">
+                </div>
+            `;
+
+            if (categoria.includes("VERDURAS")) {
+                contenedorVerduras.innerHTML += cardHTML;
+            } else if (categoria.includes("FRUTAS")) {
+                contenedorFrutas.innerHTML += cardHTML;
+            }
+        });
+    }
+
+    function cambiarPestaña(idCategoria, boton) {
+        document.querySelectorAll('.categoria-contenido').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(idCategoria).classList.add('active');
+        boton.classList.add('active');
+    }
+
+    function calcularPedido() {
+        let subtotal = 0;
+        let pesoTotal = 0;
