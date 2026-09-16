@@ -18,7 +18,7 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding-bottom: 120px;
+            padding-bottom: 140px; /* Ajustado para dar espacio a la barra inferior */
         }
         .header-negocio {
             text-align: center;
@@ -36,6 +36,16 @@
             margin: 5px 0 0 0;
             color: #666;
             font-size: 0.9rem;
+        }
+        .whatsapp-visible {
+            display: inline-block;
+            margin-top: 8px;
+            background: #e8f5e9;
+            color: #1b5e20;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: bold;
         }
         .tabs-container {
             display: flex;
@@ -141,8 +151,9 @@
         }
         .loading {
             text-align: center;
-            padding: 20px;
+            padding: 40px;
             color: #666;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -151,6 +162,8 @@
     <div class="header-negocio">
         <h1>Distribuidora TGI</h1>
         <p>Tu mercado fresco a un clic de distancia</p>
+        <!-- Tu número de WhatsApp ahora es visible debajo del título principal -->
+        <div class="whatsapp-visible">Pedir al: +51 917 764 281</div>
     </div>
 
     <div class="tabs-container">
@@ -174,8 +187,8 @@
     </div>
 
 <script>
-    // ⚠️ PEGA AQUÍ TU ENLACE DE PUBLICACIÓN EN WEB (OPCIÓN CSV)
-    const URL_MATRIZ = "https://google.com";
+    // ⚠️ REEMPLAZA ESTE ENLACE DE EJEMPLO POR TU PROPIO LINK DE GOOGLE SHEETS EN FORMATO CSV
+    const URL_MATRIZ = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSsz8tAy3wLqwgS9XRhKjSgN6yuZ8ZN6QhhNxQs30yrKgU62kSt-FKI38qfr-QIl-bKDHtZKu9FJghW/pub?gid=1923595744&single=true&output=csv";
 
     async function consumirMatriz() {
         try {
@@ -185,7 +198,7 @@
             document.getElementById('loading').style.display = 'none';
         } catch (error) {
             console.error("Error cargando la matriz web:", error);
-            document.getElementById('loading').innerText = "Error al conectar con el inventario matriz.";
+            document.getElementById('loading').innerText = "Error de conexión. Verifica que el enlace de publicación sea correcto.";
         }
     }
 
@@ -194,23 +207,32 @@
         const contenedorVerduras = document.getElementById('verduras');
         const contenedorFrutas = document.getElementById('frutas');
 
-        // Empezamos desde la línea 1 para saltar el encabezado de tu tabla
+        // Limpiar contenedores por si acaso
+        contenedorVerduras.innerHTML = "";
+        contenedorFrutas.innerHTML = "";
+
         for (let i = 1; i < lineas.length; i++) {
             if (!lineas[i].trim()) continue;
             
-            // Separamos por comas las columnas de tu Excel
-            const columnas = lineas[i].split(",");
+            // 🛠️ DETECCIÓN AUTOMÁTICA DE SEPARADOR: Detecta si tu Excel usa comas (,) o punto y coma (;)
+            let columnas = [];
+            if (lineas[i].includes(";")) {
+                columnas = lineas[i].split(";");
+            } else {
+                columnas = lineas[i].split(",");
+            }
             
-            const categoria = columnas[0]?.trim().toUpperCase(); // Columna A
-            const producto = columnas[1]?.trim();               // Columna B
-            const medida = columnas[2]?.trim();                 // Columna C
-            const precioEntero = parseFloat(columnas[5]) || 0;  // Columna F (Precio Final Entero)
-            const precioFraccion = parseFloat(columnas[11]) || 0; // Columna L (Precio Final Fracción)
+            // Mapeo exacto según tu captura de pantalla de Excel
+            const categoria = columnas[0] ? columnas[0].trim().toUpperCase() : ""; // Columna A
+            const producto = columnas[1] ? columnas[1].trim() : "";               // Columna B
+            const medida = columnas[2] ? columnas[2].trim() : "";                 // Columna C
+            const precioEntero = columnas[5] ? parseFloat(columnas[5].replace(",", ".")) : 0;  // Columna F (PRECIO FINAL ENTERO)
+            const precioFraccion = columnas[11] ? parseFloat(columnas[11].replace(",", ".")) : 0; // Columna L (PRECIO FINAL FRACCION)
             
-            if (!producto) continue;
+            if (!producto || producto === "PRODUCTO") continue;
 
             const esPollo = producto.toUpperCase().includes("POLLO ENTERO");
-            let txtFraccion = medida === "ATADO" ? "Medio Atado" : "Medio Kilo";
+            let txtFraccion = medida.toUpperCase() === "ATADO" ? "Medio Atado" : "Medio Kilo";
             if (esPollo) txtFraccion = "Precio Especial (2 a más)";
 
             let opcionesHTML = `
@@ -232,7 +254,7 @@
             let precioDetalle = `S/. ${precioEntero.toFixed(2)} ${medida.toLowerCase()}`;
             if (precioFraccion > 0) {
                 precioDetalle += esPollo 
-                    ? `<br><small style="color:green">2 a más: S/. ${precioFraccion.toFixed(2)} c/u</small>` 
+                    ? `<br><small style="color:green; font-weight:bold;">2 a más: S/. ${precioFraccion.toFixed(2)} c/u</small>` 
                     : `<br><small>Frac: S/. ${precioFraccion.toFixed(2)}</small>`;
             }
 
@@ -247,30 +269,3 @@
                         <span class="producto-nombre">${producto}</span>
                         <div class="producto-precios">${precioDetalle}</div>
                     </div>
-                    <div class="opciones-seleccion">
-                        <select class="select-opcion" onchange="calcularPedido()">
-                            ${opcionesHTML}
-                        </select>
-                    </div>
-                    <input type="text" class="input-nota" placeholder="Notas (maduro, pintón, etc.)..." oninput="calcularPedido()">
-                </div>
-            `;
-
-            if (categoria.includes("VERDURAS")) {
-                contenedorVerduras.innerHTML += cardHTML;
-            } else if (categoria.includes("FRUTAS")) {
-                contenedorFrutas.innerHTML += cardHTML;
-            }
-        }
-    }
-
-    function cambiarPestaña(idCategoria, boton) {
-        document.querySelectorAll('.categoria-contenido').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(idCategoria).classList.add('active');
-        boton.classList.add('active');
-    }
-
-    function calcularPedido() {
-        let subtotal = 0;
-        let pesoTotal = 0;
