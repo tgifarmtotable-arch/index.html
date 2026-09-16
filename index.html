@@ -58,6 +58,7 @@
 </div>
 
 <script>
+    // ENLACE Y TELÉFONO CORREGIDOS 100% EXTRAS DESDE TU GOOGLE SHEETS REAL
     const URL_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQchkb5a-PIZNgWkAco6eSXKwaP_1ql7hvnOEhVCJ4FHdD-sLbTUlGmRlEonqgAEdpPwe3oQD_9rQil/pub?gid=1297525487&single=true&output=csv"; 
     const TELEFONO = "51917764281"; 
 
@@ -72,17 +73,16 @@
 
             filas.forEach((fila, idx) => {
                 const col = fila.split(",");
-                // Asegura que lea las filas que tengan contenido real
                 if(col.length >= 3 && col[0] && col[0].trim() !== "") {
                     productosDatos.push({
                         id: idx,
-                        categoria: col[0] ? col[0].trim().toUpperCase() : "GENERAL", // Columna A
-                        producto: col[1] ? col[1].trim() : "", // Columna B
-                        medida: col[2] ? col[2].trim() : "Kilo", // Columna C
-                        p_entero: parseFloat(col[3]) || 0, // Columna D
-                        p_fraccion: parseFloat(col[4]) || null, // Columna E
-                        p_mayorista: parseFloat(col[5]) || null, // Columna F
-                        estado: col[6] ? col[6].trim().toLowerCase() : "congelado" // Columna G
+                        categoria: col[0] ? col[0].trim().toUpperCase() : "GENERAL", 
+                        producto: col[1] ? col[1].trim() : "", 
+                        medida: col[2] ? col[2].trim() : "Kilo", 
+                        p_entero: parseFloat(col[4]) || 0, 
+                        p_fraccion: parseFloat(col[10]) || null, 
+                        p_mayorista: parseFloat(col[11]) || null, 
+                        estado: col[5] ? col[5].trim().toLowerCase() : "congelado" 
                     });
                 }
             });
@@ -182,3 +182,5 @@
 
     function enviarPedido() {
         let cliente = document.getElementById("nombreCliente").value.trim();
+        if(!cliente) return alert("Por favor, ingresa tu nombre.");
+
