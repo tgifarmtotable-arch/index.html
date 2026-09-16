@@ -1,4 +1,4 @@
-<!-- SISTEMA PREMIUM DISTRIBUIDORA TGI - LÓGICA DE PRECIOS ENTERO / FRACCIÓN -->
+<!-- SISTEMA PREMIUM ULTRA VELOZ DISTRIBUIDORA TGI -->
 <div id="tgi-bloque-sistema" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 650px; margin: 0 auto; padding: 10px; background: #ffffff;">
   
   <!-- BARRA DE PESTAÑAS INDEPENDIENTES -->
@@ -6,7 +6,7 @@
 
   <!-- SECCIÓN DE PRODUCTOS COMPACTA -->
   <div id="contenedor-productos" style="display: flex; flex-direction: column; gap: 5px;">
-    <p style="text-align: center; color: #999; font-size: 0.95em; padding: 30px;">Conectando con la matriz comercial...</p>
+    <p style="text-align: center; color: #999; font-size: 0.95em; padding: 30px;">Conectando de forma segura con la lista...</p>
   </div>
 </div>
 
@@ -15,52 +15,50 @@ let todosLosProductos = [];
 let grupoSeleccionado = "";
 const NÚMERO_WHATSAPP = "51917764281";
 
-// 1. Descarga desde la API de Google Sheets leyendo columna F (Entero) y L (Fracción)
-function cargarWebMatriz() {
-  // Solicitamos las columnas A(Categoría), B(Producto), C(Medida), F(Precio Entero), L(Precio Fracción)
-  // 1. Descarga desde la API de Google Sheets leyendo columna F (Entero) y L (Fracción)
-function cargarWebMatriz() {
+// 1. Descarga directa en CSV compatible al 100% con GitHub Pages
+async function cargarWebMatriz() {
+  const urlCSV = "https://google.com";
   
-  const urlJSON = "https://google.com";
-
-  fetch(urlJSON)
-    .then(res => res.text())
-
-    .then(texto => {
-      const jsonLimpio = JSON.parse(texto.substring(47, texto.length - 2));
-      const filas = jsonLimpio.table.rows;
+  try {
+    const respuesta = await fetch(urlCSV);
+    const textoCSV = await respuesta.text();
+    
+    // Separar por filas limpiando los saltos de línea
+    const lineas = textoCSV.split(/\r?\n/);
+    todosLosProductos = [];
+    
+    for (let i = 1; i < lineas.length; i++) {
+      if (!lineas[i].trim()) continue;
       
-      todosLosProductos = [];
+      // Separar las columnas del Excel respetando el texto con comillas
+      const celdas = lineas[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
       
-      filas.forEach((fila, index) => {
-        const c = fila.c;
-        if (c && c && c) {
-          todosLosProductos.push({
-            id: index,
-            categoria: c[0].v.toString().trim(), 
-            producto: c[1].v.toString().trim(),  
-            medida: c[2] ? c[2].v.toString().trim() : "unid", 
-            precioEntero: parseFloat(c[3] ? c[3].v : 0) || 0,   // Columna F
-            precioFraccion: parseFloat(c[4] ? c[4].v : 0) || 0, // Columna L
-            cantidad: 0,
-            nota: ""
-          });
-        }
-      });
-
-      if (todosLosProductos.length > 0) {
-        grupoSeleccionado = todosLosProductos[0].categoria;
+      if (celdas.length >= 12) {
+        todosLosProductos.push({
+          id: i,
+          categoria: celdas[0], // Columna A
+          producto: celdas[1],  // Columna B
+          medida: celdas[2],     // Columna C
+          precioEntero: parseFloat(celdas[5]) || 0,   // Columna F (Precio Entero)
+          precioFraccion: parseFloat(celdas[11]) || 0, // Columna L (Precio Fracción)
+          cantidad: 0,
+          nota: ""
+        });
       }
-      
-      reconstruirPantalla();
-      crearBotonWhatsApp();
-    })
-    .catch(err => {
-      document.getElementById('contenedor-productos').innerHTML = "<p style='text-align:center; color:#c0392b;'>⚠️ Error al sincronizar con Google Sheets.</p>";
-    });
+    }
+
+    if (todosLosProductos.length > 0) {
+      grupoSeleccionado = todosLosProductos[0].categoria;
+    }
+    
+    reconstruirPantalla();
+    crearBotonWhatsApp();
+  } catch (err) {
+    document.getElementById('contenedor-productos').innerHTML = "<p style='text-align:center; color:#c0392b; font-size:0.9em; padding:20px;'>⚠️ Error de conexión con tu WEB MATRIZ. Verifica que el archivo de Google Sheets siga publicado.</p>";
+  }
 }
 
-// 2. Pintar el catálogo limpio
+// 2. Pintar el catálogo hiper-compacto y fino por pestañas
 function reconstruirPantalla() {
   const divPestañas = document.getElementById('tgi-pestañas');
   const divProductos = document.getElementById('contenedor-productos');
@@ -82,6 +80,7 @@ function reconstruirPantalla() {
           font-weight: 600;
           cursor: pointer;
           white-space: nowrap;
+          transition: all 0.15s ease;
         ">${g}</button>
       `;
     }).join('');
@@ -91,7 +90,7 @@ function reconstruirPantalla() {
 
   let html = "";
   filtrados.forEach(p => {
-    // Si el producto no tiene precio de fracción en el Excel (está en 0), se muestra solo el precio entero
+    // Si el producto no tiene precio de fracción (columna L en 0 o vacía), muestra solo el precio entero
     const textoPrecio = p.precioFraccion > 0 
       ? `E: S/. ${p.precioEntero.toFixed(2)}<br><small style="color:#718096;font-weight:400;">F: S/. ${p.precioFraccion.toFixed(2)}</small>`
       : `S/. ${p.precioEntero.toFixed(2)}`;
@@ -107,7 +106,7 @@ function reconstruirPantalla() {
         <div style="flex: 3; display: flex; align-items: center; gap: 6px; justify-content: flex-end;">
           <input type="text" placeholder="Nota: maduro, pinto..." value="${p.nota}" 
             oninput="guardarNota(${p.id}, this.value)" 
-            style="width: 100%; max-width: 140px; padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.8em; color: #4a5568; background: #f8fafc; outline: none; border-style: solid;">
+            style="width: 100%; max-width: 150px; padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.8em; color: #4a5568; background: #f8fafc; outline: none; border-style: solid;">
           
           <input type="number" min="0" step="any" placeholder="0" value="${p.cantidad || ''}" 
             oninput="guardarCantidad(${p.id}, this.value)" 
@@ -143,24 +142,21 @@ function guardarNota(id, val) {
   if (p) p.nota = val.trim();
 }
 
-// 3. Función matemática inteligente: Separa Enteros y Fracciones
+// 3. Función matemática comercial: Separa Enteros y Fracciones al cobrar
 function calcularSubtotalProducto(p) {
   if (p.cantidad <= 0) return 0;
 
-  // Si el producto no tiene precio de fracción configurado, calcula todo con precio entero
+  // Si no hay precio de fracción, calcula todo al precio normal de entero
   if (p.precioFraccion === 0) {
     return p.cantidad * p.precioEntero;
   }
 
-  // Separar la cantidad en parte entera y parte decimal (Fracción)
+  // Desglosar la cantidad ingresada (ejemplo: 1.5 -> parte entera = 1, fracción = 0.5)
   const parteEntera = Math.floor(p.cantidad); 
   const parteFraccion = p.cantidad - parteEntera; 
 
-  // LÓGICA DE COBRO:
-  // Parte entera se multiplica por PRECIO ENTERO
-  // Parte decimal se multiplica por PRECIO FRACCIÓN (calculado proporcionalmente si es 0.5 o similar)
-  // Nota: Si la regla es que "0.5" equivale exactamente al costo de la columna L, multiplicamos la fracción basada en una escala de 0.5.
   const costoEntero = parteEntera * p.precioEntero;
+  // Multiplica la fracción asumiendo que 0.5 equivale al valor de la columna L
   const costoFraccion = (parteFraccion / 0.5) * p.precioFraccion; 
 
   return costoEntero + costoFraccion;
@@ -199,7 +195,7 @@ function actualizarSumaBoton() {
   if (btn) btn.innerHTML = `🛒 Enviar Pedido (S/. ${t.toFixed(2)})`;
 }
 
-// 4. Enviar el pedido desglosado correctamente a WhatsApp
+// 4. Enviar orden final desglosada a tu WhatsApp
 function enviarWhatsApp() {
   const pedido = todosLosProductos.filter(p => p.cantidad > 0);
   if (pedido.length === 0) {
@@ -227,5 +223,6 @@ function enviarWhatsApp() {
   window.open(`https://whatsapp.com{NÚMERO_WHATSAPP}&text=${encodeURIComponent(m)}`, '_blank');
 }
 
+// Iniciar descarga veloz por CSV
 cargarWebMatriz();
 </script>
