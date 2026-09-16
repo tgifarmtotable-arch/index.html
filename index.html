@@ -18,8 +18,8 @@ const NÚMERO_WHATSAPP = "51917764281";
 // 1. Descarga desde la API de Google Sheets leyendo columna F (Entero) y L (Fracción)
 function cargarWebMatriz() {
   // Solicitamos las columnas A(Categoría), B(Producto), C(Medida), F(Precio Entero), L(Precio Fracción)
-  const spreadsheetId = "1vRbPkbgiCxe2RMmyLOrObjSI7yG6u9sszjPvC0BM8mKb3S4Q_lhZLqAaOdAhFW6glpChhoWvdYpHan7";
-  const urlJSON = `https://google.com{spreadsheetId}/gviz/tq?tqx=out:json&tq=SELECT+A,B,C,F,L&gid=1523459015`;
+  const urlJSON = "https://google.com";
+
 
   fetch(urlJSON)
     .then(res => res.text())
