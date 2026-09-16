@@ -10,28 +10,21 @@
         header { background: var(--verde-tgi); color: white; padding: 15px; text-align: center; position: sticky; top:0; z-index:100; }
         .container { max-width: 600px; margin: 15px auto; padding: 0 15px; }
         .cliente-input { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; box-sizing: border-box; }
-        
         .instruccion { background: #e1f5fe; border-left: 5px solid #0288d1; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-size: 0.9rem; }
-        
-        /* Sistema de Filas Dinámicas */
         .fila-pedido { background: white; padding: 15px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; border-left: 5px solid var(--accent); }
         .buscador-wrapper { position: relative; width: 100%; }
         .input-buscar-prod { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem; }
-        
-        /* Lista de Autocompletado flotante */
         .sugerencias-lista { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-radius: 0 0 6px 6px; display: none; }
-        .sugerencia-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.95rem; }
+        .sugerencia-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.95rem; display: flex; justify-content: space-between; }
+        .badge-cat { background: #eee; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #666; }
         .sugerencia-item:hover { background: #f0f0f0; }
-        
         .detalles-producto { margin-top: 12px; display: none; background: #fafafa; padding: 10px; border-radius: 6px; }
         .info-precio { font-size: 0.9rem; color: #555; margin-bottom: 8px; font-weight: bold; }
         .flex-controles { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
         select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.9rem; background: white; width: 150px; }
         .nota-cliente { width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; }
-        
         .btn-agregar-fila { background: var(--verde-tgi); color: white; border: none; padding: 10px 20px; font-size: 1rem; font-weight: bold; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; margin: 15px auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .btn-eliminar { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #c62828; font-size: 1.2rem; cursor: pointer; }
-        
         .footer-total { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -3px 10px rgba(0,0,0,0.1); text-align: center; z-index: 100; }
         .btn-enviar { background: #25d366; color: white; border: none; padding: 12px; width: 100%; max-width: 500px; font-size: 1.1rem; font-weight: bold; border-radius: 25px; cursor: pointer; }
     </style>
@@ -47,12 +40,10 @@
     <input type="text" id="nombreCliente" class="cliente-input" placeholder="👤 Escribe tu Nombre o Negocio (Obligatorio)">
     
     <div class="instruccion">
-        🔍 Escribe el nombre del producto en la casilla de abajo para buscarlo. Usa el botón <strong>"➕ Agregar otro producto"</strong> para añadir más artículos a tu lista.
+        🔍 Busca tus productos por nombre. Encontrarás **Pollo Fresco, Frutas, Verduras y Complementos** juntos. Usa el botón <strong>"➕ Agregar otro"</strong> para armar tu lista.
     </div>
 
-    <!-- Contenedor donde se irán sumando tus filas dinámicas -->
     <div id="contenedorFilas"></div>
-    
     <button class="btn-agregar-fila" onclick="crearNuevaFila()">➕ Agregar otro producto</button>
 </div>
 
@@ -62,7 +53,6 @@
 </div>
 
 <script>
-    // TU ENLACE Y WHATSAPP SINCRONIZADOS DE TU IMAGEN ANTERIOR
     const URL_CSV = "https://google.com"; 
     const TELEFONO = "51917764281"; 
 
@@ -81,19 +71,19 @@
                 if(col.length >= 3 && col[0].trim() !== "") {
                     productosDatos.push({
                         id: idx,
+                        categoria: col[1] ? col[1].trim().toUpperCase() : "GENERAL",
                         producto: col[0].trim(),
-                        medida: col[1].trim(),
+                        medida: col[2] ? col[2].trim() : "Unidad",
                         p_entero: parseFloat(col[4]) || 0,
                         p_fraccion: parseFloat(col[10]) || null,
                         p_mayorista: parseFloat(col[5]) || null,
-                        estado: col[11] ? col[11].trim().toLowerCase() : "congelado"
+                        estado: col[11] ? col[11].trim().toLowerCase() : "ESTABLE"
                     });
                 }
             });
-            // Arrancamos la pantalla con la primera fila vacía lista para usar
             crearNuevaFila();
         } catch (e) {
-            document.getElementById("contenedorFilas").innerText = "Sincronizando con tu Google Sheets... Verifica el enlace.";
+            document.getElementById("contenedorFilas").innerText = "Conectando con la matriz de precios...";
         }
     }
 
@@ -101,7 +91,6 @@
         contadorFilas++;
         const idFila = contadorFilas;
         const contenedor = document.getElementById("contenedorFilas");
-        
         const divFila = document.createElement("div");
         divFila.className = "fila-pedido";
         divFila.id = `fila-${idFila}`;
@@ -110,7 +99,7 @@
         divFila.innerHTML = `
             ${idFila > 1 ? `<button class="btn-eliminar" onclick="eliminarFila(${idFila})">❌</button>` : ''}
             <div class="buscador-wrapper">
-                <input type="text" class="input-buscar-prod" id="buscar-${idFila}" placeholder="🔍 Escribe para buscar... (ej: ají, pollo, acelga)" oninput="buscarSugerencias(${idFila})">
+                <input type="text" class="input-buscar-prod" id="buscar-${idFila}" placeholder="🔍 Escribe para buscar... (ej: pollo, manzana, ají)" oninput="buscarSugerencias(${idFila})">
                 <div class="sugerencias-lista" id="sug-${idFila}"></div>
             </div>
             <div class="detalles-producto" id="detalles-${idFila}">
@@ -119,7 +108,7 @@
                     <label style="font-size:0.9rem; font-weight:bold;">Cantidad:</label>
                     <select id="sel-${idFila}" onchange="calcularTotal()"></select>
                 </div>
-                <input type="text" id="nota-${idFila}" class="nota-cliente" placeholder="✍️ Nota (ej: maduros, verdes, grandes...)">
+                <input type="text" id="nota-${idFila}" class="nota-cliente" placeholder="✍️ Nota (ej: bien maduros, pechuga grande, verdes...)">
             </div>
         `;
         contenedor.appendChild(divFila);
@@ -133,11 +122,7 @@
     function buscarSugerencias(idFila) {
         const texto = document.getElementById(`buscar-${idFila}`).value.toLowerCase().trim();
         const listaSugerencias = document.getElementById(`sug-${idFila}`);
-        
-        if (texto === "") {
-            listaSugerencias.style.display = "none";
-            return;
-        }
+        if (texto === "") { listaSugerencias.style.display = "none"; return; }
 
         const filtrados = productosDatos.filter(p => p.producto.toLowerCase().includes(texto));
         listaSugerencias.innerHTML = "";
@@ -147,13 +132,11 @@
             filtrados.forEach(p => {
                 const item = document.createElement("div");
                 item.className = "sugerencia-item";
-                item.innerText = `${p.producto} (${p.medida.toLowerCase()})`;
+                item.innerHTML = `<span>${p.producto}</span> <span class="badge-cat">${p.categoria}</span>`;
                 item.onclick = () => seleccionarProducto(idFila, p);
                 listaSugerencias.appendChild(item);
             });
-        } else {
-            listaSugerencias.style.display = "none";
-        }
+        } else { listaSugerencias.style.display = "none"; }
     }
 
     function seleccionarProducto(idFila, producto) {
@@ -167,14 +150,13 @@
         const infoPrecio = document.getElementById(`infoprecio-${idFila}`);
         const selector = document.getElementById(`sel-${idFila}`);
         
-        // Configurar Alertas Visuales en la Tarjeta Individual
         divFila.className = `fila-pedido ${producto.estado}`;
         let txtEtiqueta = producto.estado === "bajo" ? "🔥 ¡En Oferta!" : (producto.estado === "subio" ? "⚠️ Ajuste de mercado" : "❄️ Precio Congelado");
-        infoPrecio.innerHTML = `<span style="color:var(--verde-tgi);">${txtEtiqueta}</span><br>Precio: S/. ${producto.p_entero.toFixed(2)} por ${producto.medida.toLowerCase()}`;
+        infoPrecio.innerHTML = `Precio: S/. ${producto.p_entero.toFixed(2)} por ${producto.medida.toLowerCase()}`;
         
-        // Armar el Selector Personalizado
-        selector.innerHTML = `<option value="0" data-p="0">Seleccionar...</option>`;
+        selector.innerHTML = `<option value="0" data-p="0">Seleccionar cantidad...</option>`;
         if (producto.p_fraccion) {
             selector.innerHTML += `<option value="0.5" data-p="${producto.p_fraccion}">1/2 ${producto.medida.toLowerCase()} (S/. ${producto.p_fraccion.toFixed(2)})</option>`;
         }
         selector.innerHTML += `<option value="1" data-p="${producto.p_entero}">1 ${producto.medida.toLowerCase()}</option>`;
+        selector.innerHTML += `<option value="2" data-p="${producto.p_mayorista ? producto.p_mayorista * 2 : producto.p_entero * 2}">2 ${producto.medida.toLowerCase()}${producto.p_mayorista ? ' (S/. ' + producto.p_mayorista.toFixed(2) + ' c/u)' : ''}</option>`;
