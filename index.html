@@ -3,185 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedidos - Mercado Fresco</title>
+    <title>Pedido Mayorista - TGI</title>
     <style>
-        :root { --verde-oscuro: #2e7d32; --verde-brillante: #4caf50; --fondo-gris: #f4f6f4; }
-        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; background-color: var(--fondo-gris); color: #333; }
-        header { background-color: var(--verde-oscuro); color: white; padding: 15px; text-align: center; }
-        .container { max-width: 600px; margin: 0 auto; padding: 12px; padding-bottom: 120px; }
-        .aviso { background-color: #fff3cd; border-left: 5px solid #ffc107; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-size: 0.85rem; }
-        
-        /* Buscador y Categorías */
-        .buscador-box { position: sticky; top: 0; background: var(--fondo-gris); padding: 10px 0; z-index: 10; }
-        #inputBuscador { width: 100%; padding: 12px; border-radius: 25px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .menu-categorias { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 12px 0; scrollbar-width: none; }
-        .btn-cat { background: white; border: 1px solid #ccc; padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: 500; }
-        .btn-cat.active { background: var(--verde-oscuro); color: white; border-color: var(--verde-oscuro); }
-
-        .categoria-grupo h3 { color: var(--verde-oscuro); border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-top: 20px; }
-        .producto-card { background: white; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 12px; }
-        .img-mini { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+        :root { --verde-tgi: #1b5e20; --accent: #2e7d32; --gris: #f8f9fa; }
+        body { font-family: system-ui, -apple-system, sans-serif; margin:0; padding:0; background: var(--gris); color: #222; }
+        header { background: var(--verde-tgi); color: white; padding: 15px; text-align: center; position: sticky; top:0; z-index:100; }
+        .nav-secciones { display: flex; gap: 5px; background: white; padding: 10px; overflow-x: auto; position: sticky; top: 68px; z-index: 90; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btn-seccion { background: #eee; border:none; padding: 10px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-seccion.active { background: var(--accent); color: white; }
+        .container { max-width: 600px; margin: 20px auto; padding: 0 15px; padding-bottom: 120px; }
+        .seccion-contenido { display: none; }
+        .seccion-contenido.active { display: block; }
+        .card { background: white; padding: 12px; margin-bottom: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); display: flex; align-items: center; justify-content: space-between; }
         .info { flex-grow: 1; }
-        .producto-nombre { font-weight: bold; font-size: 1rem; }
-        .precio-ref { color: #666; font-size: 0.85rem; }
-        select { padding: 6px; border-radius: 4px; border: 1px solid #ccc; background: white; font-size: 0.85rem; width: 115px; }
-        
-        .barra-total { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px; box-shadow: 0 -3px 10px rgba(0,0,0,0.1); text-align: center; z-index: 100; }
-        .total-texto { font-size: 1.1rem; font-weight: bold; margin-bottom: 8px; }
-        .btn-enviar { background-color: #25d366; color: white; border: none; padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 25px; cursor: pointer; width: 100%; max-width: 576px; }
+        .nombre { font-weight: bold; font-size: 1.05rem; }
+        .precio { color: #666; font-size: 0.85rem; margin-top: 2px; }
+        select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; width: 130px; font-size: 0.9rem; }
+        .footer-total { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -3px 10px rgba(0,0,0,0.1); text-align: center; }
+        .btn-enviar { background: #25d366; color: white; border: none; padding: 12px; width: 100%; max-width: 500px; font-size: 1.1rem; font-weight: bold; border-radius: 25px; cursor: pointer; }
+        .cliente-input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h2>🌿 Mercado Fresco</h2>
-        <p>Pre-pedido Inteligente</p>
-    </header>
+<header>
+    <h2>🌿 Distribuidora TGI</h2>
+    <p>Pre-Pedido de Carga Diario</p>
+</header>
 
-    <div class="container">
-        <div class="aviso">
-            ⚠️ <strong>Nota:</strong> Los pesos y costos finales exactos se enviarán mañana a las 3:00 am tras el pesaje en el mercado.
+<div class="nav-secciones">
+    <button class="btn-seccion active" onclick="cambiarSeccion('pollo', this)">🍗 Pollo Fresco</button>
+    <button class="btn-seccion" onclick="cambiarSeccion('frutas', this)">🍓 Frutas</button>
+    <button class="btn-seccion" onclick="cambiarSeccion('verduras', this)">🥦 Verduras</button>
+    <button class="btn-seccion" onclick="cambiarSeccion('complementos', this)">📦 Complementos</button>
+</div>
+
+<div class="container">
+    <input type="text" id="nombreCliente" class="cliente-input" placeholder="👤 Escribe tu Nombre o Negocio (Obligatorio)">
+
+    <!-- SECCIÓN POLLO -->
+    <div id="pollo" class="seccion-contenido active">
+        <div class="card" data-p="Pollo Entero" data-pr="3.50">
+            <div class="info"><div class="nombre">Pollo Entero c/Menudencia</div><div class="precio">$3.50 / Kg (Aprox)</div></div>
+            <select onchange="calcular()"><option value="0">No llevar</option><option value="1">1 Unidad</option><option value="3">3 Unidades</option><option value="5">5 Unidades</option></select>
         </div>
-
-        <!-- Buscador Inteligente -->
-        <div class="buscador-box">
-            <input type="text" id="inputBuscador" placeholder="🔍 Buscar producto (ej: papa, plátano)..." oninput="filtrarProductos()">
-            <div class="menu-categorias" id="contenedorCategorias">
-                <button class="btn-cat active" onclick="filtrarPorCategoria('TODOS', this)">📌 Todos</button>
-            </div>
+        <div class="card" data-p="Pechuga de Pollo" data-pr="5.80">
+            <div class="info"><div class="nombre">Pechuga de Pollo Fileteada</div><div class="precio">$5.80 / Kg</div></div>
+            <select onchange="calcular()"><option value="0">No llevar</option><option value="0.5">0.5 Kg</option><option value="1">1 Kg</option><option value="2">2 Kg</option></select>
         </div>
-
-        <!-- El contenedor dinámico donde se cargarán tus 200 productos -->
-        <div id="catalogo">Cargando catálogo desde la matriz de precios...</div>
     </div>
 
-    <div class="barra-total">
-        <div class="total-texto">Total Estimado: $<span id="total-suma">0.00</span></div>
-        <button class="btn-enviar" onclick="enviarWhatsApp()">📱 Enviar Pedido por WhatsApp</button>
+    <!-- SECCIÓN FRUTAS -->
+    <div id="frutas" class="seccion-contenido">
+        <div class="card" data-p="Mandarina" data-pr="2.20">
+            <div class="info"><div class="nombre">🍊 Mandarina de Estación</div><div class="precio">$2.20 / Kg</div></div>
+            <select onchange="calcular()"><option value="0">No llevar</option><option value="0.5">0.5 Kg</option><option value="1">1 Kg</option><option value="2">2 Kg</option><option value="5">5 Kg</option></select>
+        </div>
     </div>
 
-    <script>
-        // REEMPLAZOS CLAVE:
-        const TELEFONO_EMPRESA = "51999999999"; // <-- Coloca aquí tu número de WhatsApp
-        const URL_CSV_GOOGLE = "AQUÍ_PEGA_EL_ENLACE_CSV_DE_GOOGLE"; // <-- Coloca aquí el enlace CSV de tu paso 1
+    <!-- SECCIÓN VERDURAS -->
+    <div id="verduras" class="seccion-contenido">
+        <div class="card" data-p="Tomate" data-pr="1.90">
+            <div class="info"><div class="nombre">🥦 Tomate Maratón</div><div class="precio">$1.90 / Kg</div></div>
+            <select onchange="calcular()"><option value="0">No llevar</option><option value="0.5">0.5 Kg</option><option value="1">1 Kg</option><option value="2">2 Kg</option></select>
+        </div>
+    </div>
 
-        let listaProductos global = [];
+    <!-- SECCIÓN COMPLEMENTOS -->
+    <div id="complementos" class="seccion-contenido">
+        <div class="card" data-p="Huevo Jaba" data-pr="4.50">
+            <div class="info"><div class="nombre">🥚 Jaba de Huevos (30 unidades)</div><div class="precio">$4.50 / Jaba</div></div>
+            <select onchange="calcular()"><option value="0">No llevar</option><option value="1">1 Jaba</option><option value="2">2 Jabas</option></select>
+        </div>
+    </div>
+</div>
 
-        async function cargarCatalogo() {
-            try {
-                const respuesta = await fetch(URL_CSV_GOOGLE);
-                const texto = await respuesta.text();
-                const lineas = texto.split("\n").slice(1);
-                
-                let html = "";
-                let categoriasDetectadas = new Set();
-                listaProductos = [];
+<div class="footer-total">
+    <div style="font-weight: bold; margin-bottom: 8px;">Total Estimado: $<span id="total">0.00</span></div>
+    <button class="btn-enviar" onclick="enviar()">📱 Enviar Pre-Pedido</button>
+</div>
 
-                lineas.forEach((linea, index) => {
-                    const columnas = linea.split(",");
-                    if(columnas.length >= 3 && columnas[1].trim() !== "") {
-                        const item = {
-                            id: index,
-                            categoria: columnas[0].trim(),
-                            nombre: columnas[1].trim(),
-                            precio: parseFloat(columnas[2]) || 0,
-                            imagen: columnas[3] ? columnas[3].trim() : "📦",
-                            unidad: columnas[4] ? columnas[4].trim() : "Kilo"
-                        };
-                        listaProductos.push(item);
-                        categoriasDetectadas.add(item.categoria);
-                    }
-                });
-
-                // Crear botones de categoría dinámicos
-                const catContenedor = document.getElementById("contenedorCategorias");
-                categoriasDetectadas.forEach(cat => {
-                    catContenedor.innerHTML += `<button class="btn-cat" onclick="filtrarPorCategoria('${cat}', this)">${cat}</button>`;
-                });
-
-                renderizarCatalogo(listaProductos);
-            } catch (error) {
-                document.getElementById("catalogo").innerText = "Error cargando la lista de precios. Verifica el enlace de Google Sheets.";
-            }
-        }
-
-        function renderizarCatalogo(productos) {
-            const catalogo = document.getElementById("catalogo");
-            catalogo.innerHTML = "";
-
-            // Agrupar por categoría
-            let porCategoria = {};
-            productos.forEach(p => {
-                if(!porCategoria[p.categoria]) porCategoria[p.categoria] = [];
-                porCategoria[p.categoria].push(p);
-            });
-
-            for(let cat in porCategoria) {
-                let catHtml = `<div class="categoria-grupo" data-catname="${cat}"><h3>${cat}</h3>`;
-                porCategoria[cat].forEach(p => {
-                    let esUrl = p.imagen.startsWith("http");
-                    let visualImg = esUrl ? `<img src="${p.imagen}" class="img-mini" alt="${p.nombre}">` : `<div class="img-mini">${p.imagen}</div>`;
-                    
-                    catHtml += `
-                        <div class="producto-card" data-nombre="${p.nombre.toLowerCase()}">
-                            ${visualImg}
-                            <div class="info">
-                                <div class="producto-nombre">${p.nombre}</div>
-                                <div class="precio-ref">$${p.precio.toFixed(2)} / ${p.unidad}</div>
-                            </div>
-                            <div class="controles">
-                                <select class="selector-cantidad" data-nombre="${p.nombre}" onchange="calcularTotal()">
-                                    <option value="0" data-costo="0">No llevar</option>
-                                    <option value="0.5" data-costo="${p.precio * 0.5}">1/2 ${p.unidad} ($${(p.precio*0.5).toFixed(2)})</option>
-                                    <option value="1" data-costo="${p.precio}">1 ${p.unidad} ($${p.precio.toFixed(2)})</option>
-                                    <option value="2" data-costo="${p.precio * 2}">2 ${p.unidad} ($${(p.precio*2).toFixed(2)})</option>
-                                </select>
-                            </div>
-                        </div>`;
-                });
-                catHtml += `</div>`;
-                catalogo.innerHTML += catHtml;
-            }
-        }
-
-        function filtrarProductos() {
-            const busqueda = document.getElementById("inputBuscador").value.toLowerCase();
-            const cards = document.querySelectorAll(".producto-card");
-            
-            cards.forEach(card => {
-                const nombre = card.getAttribute("data-nombre");
-                if(nombre.includes(busqueda)) {
-                    card.style.display = "flex";
-                } else {
-                    card.style.display = "none";
-                }
-            });
-
-            // Ocultar títulos de categorías vacías
-            document.querySelectorAll(".categoria-grupo").forEach(grupo => {
-                const visibles = grupo.querySelectorAll('.producto-card[style="display: flex;"]');
-                const cardsTotales = grupo.querySelectorAll('.producto-card');
-                if(visibles.length === 0 && busqueda !== "") {
-                    grupo.querySelector("h3").style.display = "none";
-                } else {
-                    grupo.querySelector("h3").style.display = "block";
-                }
-            });
-        }
-
-        function filtrarPorCategoria(categoria, boton) {
-            document.querySelectorAll(".btn-cat").forEach(b => b.classList.remove("active"));
-            boton.classList.add("active");
-            
-            document.querySelectorAll(".categoria-grupo").forEach(grupo => {
-                if(categoria === "TODOS" || grupo.getAttribute("data-catname") === categoria) {
-                    grupo.style.display = "block";
-                } else {
-                    grupo.style.display = "none";
-                }
-            });
-        }
-
-        function calcularTotal() {
-            let total = 0;
-            document.querySelectorAll('.selector-cantidad').forEach(select => {
+<script>
+    function cambiarSeccion(id, btn) {
+        document.querySelectorAll('.seccion-contenido').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('.btn-seccion').forEach(e => e.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+    }
+    function calcular() {
+        let t = 0;
+        document.querySelectorAll('.card').forEach(c => {
+            let cant = parseFloat(c.querySelector('select').value);
+            let precio = parseFloat(c.getAttribute('data-pr'));
+            t += cant * precio;
+        });
+        document.getElementById('total').innerText = t.toFixed(2);
+    }
+    function enviar() {
+        let nom = document.getElementById('nombreCliente').value.trim();
+        if(!nom) return alert("Por favor ingresa tu nombre");
+        
+        // FORMATO DE CADENA EXCLUSIVO PARA TU BASE DE DATOS
+        let msg = `DATA_TGI|Cliente:${nom}\n`;
+        document.querySelectorAll('.card').forEach(c => {
+            let cant = parseFloat(c.querySelector('select').value);
+            if(cant > 0) msg += `${c.getAttribute('data-p')}:${cant}\n`;
+        });
+        
+        window.open(`https://whatsapp.com{encodeURIComponent(msg)}`, '_blank');
+    }
+</script>
+</body>
+</html>
