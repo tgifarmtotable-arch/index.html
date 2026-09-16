@@ -6,49 +6,54 @@
     <title>Pedidos Inteligentes - TGI</title>
     <style>
         :root { --verde-tgi: #1b5e20; --accent: #2e7d32; --gris: #f8f9fa; }
-        body { font-family: system-ui, -apple-system, sans-serif; margin:0; padding:0; background: var(--gris); color: #222; }
+        body { font-family: system-ui, -apple-system, sans-serif; margin:0; padding:0; background: var(--gris); color: #222; padding-bottom: 140px; }
         header { background: var(--verde-tgi); color: white; padding: 15px; text-align: center; position: sticky; top:0; z-index:100; }
-        .buscador-box { position: sticky; top: 68px; background: var(--gris); padding: 10px 15px; z-index: 90; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        #inputBuscador { width: 100%; padding: 12px; border-radius: 25px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem; }
-        .container { max-width: 600px; margin: 15px auto; padding: 0 15px; padding-bottom: 120px; }
+        .container { max-width: 600px; margin: 15px auto; padding: 0 15px; }
+        .cliente-input { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; box-sizing: border-box; }
         
-        /* Tarjetas con alertas de color basadas en tu Excel */
-        .card { background: white; padding: 15px; margin-bottom: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-left: 6px solid #ccc; }
-        .card.bajo { border-left-color: #2e7d32; background: #e8f5e9; } /* Verde - Bajó */
-        .card.subio { border-left-color: #fbc02d; background: #fffde7; } /* Amarillo - Subió */
-        .card.congelado { border-left-color: #0288d1; background: #e1f5fe; } /* Azul - Se mantiene */
+        .instruccion { background: #e1f5fe; border-left: 5px solid #0288d1; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-size: 0.9rem; }
         
-        .etiqueta-estado { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; display: inline-block; padding: 2px 6px; border-radius: 4px; margin-bottom: 5px; }
-        .bajo .etiqueta-estado { background: #2e7d32; color: white; }
-        .subio .etiqueta-estado { background: #fbc02d; color: #333; }
-        .congelado .etiqueta-estado { background: #0288d1; color: white; }
-
-        .producto-fila { display: flex; align-items: center; justify-content: space-between; }
-        .info { flex-grow: 1; padding-right: 10px; }
-        .nombre { font-weight: bold; font-size: 1.05rem; text-transform: uppercase; }
-        .precio { color: #555; font-size: 0.85rem; margin-top: 2px; }
-        select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; width: 140px; font-size: 0.9rem; background: white; }
-        .nota-cliente { width: 100%; margin-top: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; display: none; }
+        /* Sistema de Filas Dinámicas */
+        .fila-pedido { background: white; padding: 15px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; border-left: 5px solid var(--accent); }
+        .buscador-wrapper { position: relative; width: 100%; }
+        .input-buscar-prod { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem; }
+        
+        /* Lista de Autocompletado flotante */
+        .sugerencias-lista { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-radius: 0 0 6px 6px; display: none; }
+        .sugerencia-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.95rem; }
+        .sugerencia-item:hover { background: #f0f0f0; }
+        
+        .detalles-producto { margin-top: 12px; display: none; background: #fafafa; padding: 10px; border-radius: 6px; }
+        .info-precio { font-size: 0.9rem; color: #555; margin-bottom: 8px; font-weight: bold; }
+        .flex-controles { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+        select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.9rem; background: white; width: 150px; }
+        .nota-cliente { width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; }
+        
+        .btn-agregar-fila { background: var(--verde-tgi); color: white; border: none; padding: 10px 20px; font-size: 1rem; font-weight: bold; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; margin: 15px auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-eliminar { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #c62828; font-size: 1.2rem; cursor: pointer; }
         
         .footer-total { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -3px 10px rgba(0,0,0,0.1); text-align: center; z-index: 100; }
         .btn-enviar { background: #25d366; color: white; border: none; padding: 12px; width: 100%; max-width: 500px; font-size: 1.1rem; font-weight: bold; border-radius: 25px; cursor: pointer; }
-        .cliente-input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
 <header>
     <h2>🌿 Distribuidora TGI</h2>
-    <p>Pre-Pedido de Carga Diario</p>
+    <p>Pre-Pedido de Carga Inteligente</p>
 </header>
-
-<div class="buscador-box">
-    <input type="text" id="inputBuscador" placeholder="🔍 Buscar producto (ej: ají, pollo, acelga)..." oninput="filtrar()">
-</div>
 
 <div class="container">
     <input type="text" id="nombreCliente" class="cliente-input" placeholder="👤 Escribe tu Nombre o Negocio (Obligatorio)">
-    <div id="catalogo">Conectando con tu lista de precios en vivo...</div>
+    
+    <div class="instruccion">
+        🔍 Escribe el nombre del producto en la casilla de abajo para buscarlo. Usa el botón <strong>"➕ Agregar otro producto"</strong> para añadir más artículos a tu lista.
+    </div>
+
+    <!-- Contenedor donde se irán sumando tus filas dinámicas -->
+    <div id="contenedorFilas"></div>
+    
+    <button class="btn-agregar-fila" onclick="crearNuevaFila()">➕ Agregar otro producto</button>
 </div>
 
 <div class="footer-total">
@@ -57,11 +62,12 @@
 </div>
 
 <script>
-    // ⚠️ CONFIGURACIÓN CLAVE: REEMPLAZA ESTOS DOS DATOS
-    const URL_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQchkb5a-PIZNgWkAco6eSXKwaP_1ql7hvnOEhVCJ4FHdD-sLbTUlGmRlEonqgAEdpPwe3oQD_9rQil/pub?output=csv"; 
+    // TU ENLACE Y WHATSAPP SINCRONIZADOS DE TU IMAGEN ANTERIOR
+    const URL_CSV = "https://google.com"; 
     const TELEFONO = "51917764281"; 
 
     let productosDatos = [];
+    let contadorFilas = 0;
 
     async function cargarExcel() {
         try {
@@ -84,92 +90,91 @@
                     });
                 }
             });
-            renderizar(productosDatos);
+            // Arrancamos la pantalla con la primera fila vacía lista para usar
+            crearNuevaFila();
         } catch (e) {
-            document.getElementById("catalogo").innerText = "Sincronizando con la matriz... Asegúrate de publicar el archivo.";
+            document.getElementById("contenedorFilas").innerText = "Sincronizando con tu Google Sheets... Verifica el enlace.";
         }
     }
 
-    function renderizar(lista) {
-        const cat = document.getElementById("catalogo");
-        cat.innerHTML = "";
+    function crearNuevaFila() {
+        contadorFilas++;
+        const idFila = contadorFilas;
+        const contenedor = document.getElementById("contenedorFilas");
         
-        lista.forEach((p) => {
-            let opcionFraccion = p.p_fraccion ? `<option value="0.5" data-p="${p.p_fraccion}">1/2 ${p.medida.toLowerCase()} (S/. ${p.p_fraccion.toFixed(2)})</option>` : "";
-            let txtEtiqueta = p.estado === "bajo" ? "🔥 ¡En Oferta!" : (p.estado === "subio" ? "⚠️ Ajuste de mercado" : "❄️ Precio Congelado");
-
-            cat.innerHTML += `
-                <div class="card ${p.estado}" data-nom="${p.producto.toLowerCase()}">
-                    <span class="etiqueta-estado">${txtEtiqueta}</span>
-                    <div class="producto-fila">
-                        <div class="info">
-                            <div class="nombre">${p.producto}</div>
-                            <div class="precio">S/. ${p.p_entero.toFixed(2)} por ${p.medida.toLowerCase()}</div>
-                        </div>
-                        <select id="sel-${p.id}" onchange="controlarCambio(${p.id})">
-                            <option value="0" data-p="0">No llevar</option>
-                            ${opcionFraccion}
-                            <option value="1" data-p="${p.p_entero}">1 ${p.medida.toLowerCase()}</option>
-                            <option value="2" data-p="${p.p_mayorista ? p.p_mayorista * 2 : p.p_entero * 2}">2 ${p.medida.toLowerCase()}${p.p_mayorista ? ' (S/. ' + p.p_mayorista.toFixed(2) + ' c/u)' : ''}</option>
-                            <option value="3" data-p="${p.p_mayorista ? p.p_mayorista * 3 : p.p_entero * 3}">3 ${p.medida.toLowerCase()}</option>
-                            <option value="5" data-p="${p.p_mayorista ? p.p_mayorista * 5 : p.p_entero * 5}">5 ${p.medida.toLowerCase()}</option>
-                        </select>
-                    </div>
-                    <input type="text" id="nota-${p.id}" class="nota-cliente" placeholder="✍️ Nota (ej: maduro, verde, grande...)">
-                </div>`;
-        });
+        const divFila = document.createElement("div");
+        divFila.className = "fila-pedido";
+        divFila.id = `fila-${idFila}`;
+        divFila.setAttribute("data-producto-seleccionado", "");
+        
+        divFila.innerHTML = `
+            ${idFila > 1 ? `<button class="btn-eliminar" onclick="eliminarFila(${idFila})">❌</button>` : ''}
+            <div class="buscador-wrapper">
+                <input type="text" class="input-buscar-prod" id="buscar-${idFila}" placeholder="🔍 Escribe para buscar... (ej: ají, pollo, acelga)" oninput="buscarSugerencias(${idFila})">
+                <div class="sugerencias-lista" id="sug-${idFila}"></div>
+            </div>
+            <div class="detalles-producto" id="detalles-${idFila}">
+                <div class="info-precio" id="infoprecio-${idFila}"></div>
+                <div class="flex-controles">
+                    <label style="font-size:0.9rem; font-weight:bold;">Cantidad:</label>
+                    <select id="sel-${idFila}" onchange="calcularTotal()"></select>
+                </div>
+                <input type="text" id="nota-${idFila}" class="nota-cliente" placeholder="✍️ Nota (ej: maduros, verdes, grandes...)">
+            </div>
+        `;
+        contenedor.appendChild(divFila);
     }
 
-    function controlarCambio(id) {
-        const selector = document.getElementById(`sel-${id}`);
-        const inputNota = document.getElementById(`nota-${id}`);
-        inputNota.style.display = selector.value !== "0" ? "block" : "none";
-        if(selector.value === "0") inputNota.value = "";
+    function eliminarFila(idFila) {
+        document.getElementById(`fila-${idFila}`).remove();
         calcularTotal();
     }
 
-    function calcularTotal() {
-        let t = 0;
-        productosDatos.forEach((p) => {
-            const sel = document.getElementById(`sel-${p.id}`);
-            const opt = sel.options[sel.selectedIndex];
-            t += parseFloat(opt.getAttribute("data-p")) || 0;
-        });
-        document.getElementById("total").innerText = t.toFixed(2);
+    function buscarSugerencias(idFila) {
+        const texto = document.getElementById(`buscar-${idFila}`).value.toLowerCase().trim();
+        const listaSugerencias = document.getElementById(`sug-${idFila}`);
+        
+        if (texto === "") {
+            listaSugerencias.style.display = "none";
+            return;
+        }
+
+        const filtrados = productosDatos.filter(p => p.producto.toLowerCase().includes(texto));
+        listaSugerencias.innerHTML = "";
+
+        if (filtrados.length > 0) {
+            listaSugerencias.style.display = "block";
+            filtrados.forEach(p => {
+                const item = document.createElement("div");
+                item.className = "sugerencia-item";
+                item.innerText = `${p.producto} (${p.medida.toLowerCase()})`;
+                item.onclick = () => seleccionarProducto(idFila, p);
+                listaSugerencias.appendChild(item);
+            });
+        } else {
+            listaSugerencias.style.display = "none";
+        }
     }
 
-    function filtrar() {
-        const bus = document.getElementById("inputBuscador").value.toLowerCase();
-        document.querySelectorAll(".card").forEach(c => {
-            c.style.display = c.getAttribute("data-nom").includes(bus) ? "block" : "none";
-        });
-    }
-
-    function enviarPedido() {
-        let cliente = document.getElementById("nombreCliente").value.trim();
-        if(!cliente) return alert("Por favor, ingresa tu nombre.");
-
-        let msg = `*NUEVO PRE-PEDIDO FRESCO TGI*\n*Cliente:* ${cliente}\n=========================\n\n`;
-        let tieneItems = false;
-
-        productosDatos.forEach((p) => {
-            const sel = document.getElementById(`sel-${p.id}`);
-            if(sel.value !== "0") {
-                tieneItems = true;
-                const textoCant = sel.options[sel.selectedIndex].text.split(" (");
-                const nota = document.getElementById(`nota-${p.id}`).value.trim();
-                msg += `• [ ] ${p.producto} -> Cantidad: ${textoCant[0]}\n`;
-                if(nota) msg += `      _Nota: ${nota}_\n`;
-            }
-        });
-
-        if(!tieneItems) return alert("Selecciona algún producto.");
-        msg += `\n=========================\n*Total Estimado:* S/. ${document.getElementById("total").innerText}\n⏰ Pesaje real a las 3:00 AM.`;
-
-        window.open(`https://whatsapp.com{TELEFONO}&text=${encodeURIComponent(msg)}`, '_blank');
-    }
-
-    window.onload = cargarExcel;
-</script>
-</body>
-</html>
+    function seleccionarProducto(idFila, producto) {
+        document.getElementById(`buscar-${idFila}`).value = producto.producto;
+        document.getElementById(`sug-${idFila}`).style.display = "none";
+        
+        const divFila = document.getElementById(`fila-${idFila}`);
+        divFila.setAttribute("data-producto-seleccionado", JSON.stringify(producto));
+        
+        const detalles = document.getElementById(`detalles-${idFila}`);
+        const infoPrecio = document.getElementById(`infoprecio-${idFila}`);
+        const selector = document.getElementById(`sel-${idFila}`);
+        
+        // Configurar Alertas Visuales en la Tarjeta Individual
+        divFila.className = `fila-pedido ${producto.estado}`;
+        let txtEtiqueta = producto.estado === "bajo" ? "🔥 ¡En Oferta!" : (producto.estado === "subio" ? "⚠️ Ajuste de mercado" : "❄️ Precio Congelado");
+        infoPrecio.innerHTML = `<span style="color:var(--verde-tgi);">${txtEtiqueta}</span><br>Precio: S/. ${producto.p_entero.toFixed(2)} por ${producto.medida.toLowerCase()}`;
+        
+        // Armar el Selector Personalizado
+        selector.innerHTML = `<option value="0" data-p="0">Seleccionar...</option>`;
+        if (producto.p_fraccion) {
+            selector.innerHTML += `<option value="0.5" data-p="${producto.p_fraccion}">1/2 ${producto.medida.toLowerCase()} (S/. ${producto.p_fraccion.toFixed(2)})</option>`;
+        }
+        selector.innerHTML += `<option value="1" data-p="${producto.p_entero}">1 ${producto.medida.toLowerCase()}</option>`;
