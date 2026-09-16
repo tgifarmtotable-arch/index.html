@@ -1,10 +1,9 @@
-<!-- SISTEMA COMPLETO DISTRIBUIDORA TGI: MATRIZ + NOTAS + WHATSAPP -->
+<!-- SISTEMA PREMIUM DISTRIBUIDORA TGI: DISEÑO COMPACTO + WHATSAPP -->
 <script>
 let todosLosProductos = [];
-// Tu número de WhatsApp real para Distribuidora TGI
 const NÚMERO_WHATSAPP = "51917764281"; 
 
-// 1. Descargar la Web Matriz en formato CSV desde tu nuevo enlace
+// 1. Descargar los datos de tu Google Sheets Matrix
 async function cargarWebMatriz() {
   const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbPkbgiCxe2RMmyLOrObjSI7yG6u9sszjPvC0BM8mKb3S4Q_lhZLqAaOdAhFW6glpChhoWvdYpHan7/pub?gid=1523459015&single=true&output=csv";
   
@@ -16,13 +15,13 @@ async function cargarWebMatriz() {
     
     for(let i = 1; i < filas.length; i++) {
       const celda = filas[i];
-      if (celda.length >= 6 && celda[1] && celda[1].trim() !== "") {
+      if (celda.length >= 6 && celda && celda.trim() !== "") {
         todosLosProductos.push({
-          id: i, // Identificador único para el pedido
-          categoria: celda[0].replace(/"/g, "").trim(),   // Columna A
-          producto: celda[1].replace(/"/g, "").trim(),    // Columna B
-          medida: celda[2].replace(/"/g, "").trim(),      // Columna C
-          precioEntero: parseFloat(celda[5].replace(/"/g, "").trim()) || 0, // Columna F
+          id: i,
+          categoria: celda[0].replace(/"/g, "").trim(),
+          producto: celda[1].replace(/"/g, "").trim(),
+          medida: celda[2].replace(/"/g, "").trim(),
+          precioEntero: parseFloat(celda[5].replace(/"/g, "").trim()) || 0,
           cantidad: 0,
           nota: ""
         });
@@ -30,25 +29,24 @@ async function cargarWebMatriz() {
     }
     
     mostrarCatalogoCompleto(todosLosProductos);
+    inyectarBotonWhatsApp(); // Crear el botón elegante al final
   } catch (error) {
     console.error("Error cargando inventario:", error);
   }
 }
 
-// 2. Mostrar la lista completa organizada por grupos con selector de cantidad y notas
+// 2. Renderizar catálogo con diseño hiper-compacto y elegante
 function mostrarCatalogoCompleto(lista) {
   const contenedor = document.getElementById('contenedor-productos') || document.querySelector('.lista-productos') || document.body;
 
-  // Ocultar mensaje de "Conectando..." cuando carguen los datos
   const cargandoAviso = document.querySelector('.loading-message') || document.getElementById('mensaje-espera');
   if(cargandoAviso) cargandoAviso.style.display = 'none';
 
   if (lista.length === 0) {
-    contenedor.innerHTML = "<p style='text-align:center; padding:20px;'>No se encontraron productos.</p>";
+    contenedor.innerHTML = "<p style='text-align:center; font-family:sans-serif; color:#777; padding:20px;'>No se encontraron productos.</p>";
     return;
   }
 
-  // Agrupar los productos por su categoría automáticamente
   const grupos = {};
   lista.forEach(prod => {
     if (!grupos[prod.categoria]) grupos[prod.categoria] = [];
@@ -57,37 +55,45 @@ function mostrarCatalogoCompleto(lista) {
 
   let htmlFinal = "";
   for (const nombreGrupo in grupos) {
+    // Título elegante minimalista
     htmlFinal += `
-      <div class="grupo-seccion" style="margin-top:25px; border-bottom:2px solid #27AE60; padding-bottom:5px;">
-        <h2 style="color:#27AE60; font-size:1.3em; text-transform:uppercase; margin-bottom:10px;">🥦 🍓 ${nombreGrupo}</h2>
+      <div class="grupo-seccion" style="margin: 30px 0 10px 0; border-left: 4px solid #1E8449; padding-left: 10px; text-align: left;">
+        <h2 style="color:#1E8449; font-family:'Segoe UI', Tahoma, sans-serif; font-size:1.15em; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin:0;">
+          🥦 🍓 ${nombreGrupo}
+        </h2>
       </div>
-      <div style="display:grid; grid-template-columns: 1fr; gap:12px; padding: 10px 0;">
+      <div style="display:flex; flex-direction:column; gap:6px; padding-bottom: 15px;">
     `;
 
     grupos[nombreGrupo].forEach(prod => {
-      // Buscar el estado real en la lista global para no perder las cantidades al usar el buscador
       const prodOriginal = todosLosProductos.find(p => p.id === prod.id);
       
+      // Fila ultracompacta tipo catálogo de restaurante gourmet
       htmlFinal += `
-        <div class="tarjeta-producto" style="background:#fff; padding:12px; border-radius:8px; border:1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align:left;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div>
-              <strong style="font-size:1.1em; color:#333;">${prodOriginal.producto}</strong>
-              <span style="color:#666; font-size:0.9em;">(${prodOriginal.medida})</span>
-            </div>
-            <span style="font-weight:bold; color:#2c3e50;">S/. ${prodOriginal.precioEntero.toFixed(2)}</span>
+        <div class="tarjeta-producto" style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 6px 12px; border-radius: 6px; border: 1px solid #eaeaea; font-family: 'Segoe UI', Tahoma, sans-serif; box-shadow: 0 1px 3px rgba(0,0,0,0.02); text-align: left; gap: 15px;">
+          
+          <!-- Nombre y Medida Compactos -->
+          <div style="flex: 2; min-width: 140px;">
+            <span style="font-weight: 500; color: #2c3e50; font-size: 0.95em;">${prodOriginal.producto}</span>
+            <span style="color: #888; font-size: 0.8em; margin-left: 4px; font-weight: 400;">(${prodOriginal.medida.toLowerCase()})</span>
           </div>
           
-          <!-- Controles de Cantidad y Notas Específicas -->
-          <div style="display:flex; gap:10px; align-items:center;">
+          <!-- Controles de Nota y Cantidad en una sola línea fina -->
+          <div style="flex: 3; display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
+            <input type="text" placeholder="Nota (maduro, verde...)" value="${prodOriginal.nota || ''}" 
+              oninput="actualizarNota(${prodOriginal.id}, this.value)" 
+              style="width: 100%; max-width: 180px; padding: 4px 8px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 0.82em; color: #555; background: #fafafa; outline: none;">
+            
             <input type="number" min="0" placeholder="0" value="${prodOriginal.cantidad || ''}" 
               oninput="actualizarCantidad(${prodOriginal.id}, this.value)" 
-              style="width:70px; padding:8px; border:1px solid #ccc; border-radius:4px; text-align:center; font-size:1em;">
-            
-            <input type="text" placeholder="Nota: Maduro, pinto, verde..." value="${prodOriginal.nota || ''}" 
-              oninput="actualizarNota(${prodOriginal.id}, this.value)" 
-              style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:0.9em;">
+              style="width: 50px; padding: 4px 6px; border: 1px solid #dcdcdc; border-radius: 4px; text-align: center; font-size: 0.9em; font-weight: 600; color: #2c3e50; outline: none;">
           </div>
+
+          <!-- Precio Fino -->
+          <div style="min-width: 65px; text-align: right;">
+            <span style="font-weight: 600; color: #27AE60; font-size: 0.95em;">S/. ${prodOriginal.precioEntero.toFixed(2)}</span>
+          </div>
+
         </div>
       `;
     });
@@ -96,85 +102,103 @@ function mostrarCatalogoCompleto(lista) {
   contenedor.innerHTML = htmlFinal;
 }
 
-// 3. Guardar en memoria lo que el cliente digita
 function actualizarCantidad(id, valor) {
   const prod = todosLosProductos.find(p => p.id === id);
   if(prod) {
     prod.cantidad = parseFloat(valor) || 0;
-    calcularTotalEstimado();
+    actualizarBotonFlotante();
   }
 }
 
-// Guardar notas específicas (Maduro, verde, pinto, etc.)
 function actualizarNota(id, valor) {
   const prod = todosLosProductos.find(p => p.id === id);
   if(prod) prod.nota = valor.trim();
 }
 
-// 4. Calcular el "Total Estimado" en la barra inferior en tiempo real
-function calcularTotalEstimado() {
+// 3. Crear de forma dinámica el botón flotante elegante de WhatsApp al final
+function inyectarBotonWhatsApp() {
+  if (document.getElementById('btn-whatsapp-flotante')) return;
+
+  const btn = document.createElement('div');
+  btn.id = 'btn-whatsapp-flotante';
+  // Estilo premium, fijo abajo a la derecha, se adapta a móviles y PC
+  btn.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #25D366;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-family: 'Segoe UI', sans-serif;
+    font-weight: 600;
+    font-size: 0.95em;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+    cursor: pointer;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s ease, background 0.2s ease;
+  `;
+  btn.innerHTML = `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.713-1.457L0 24zm6.59-4.846c1.66.986 3.292 1.493 4.9c1.495.004 5.428-1.746 6.55-4.9.124-.347.01-.644-.066-.763-.076-.12-.247-.193-.518-.327-.271-.135-1.604-.791-1.853-.882-.249-.09-.431-.135-.615.135-.183.27-.712.893-.872 1.074-.16.181-.32.203-.591.068-.271-.134-1.144-.421-2.179-1.343-.804-.715-1.347-1.602-1.505-1.872-.159-.27-.017-.417.118-.552.122-.121.27-.32.406-.479.135-.16.181-.271.271-.452.09-.18.045-.339-.022-.474-.068-.135-.615-1.482-.843-2.029-.222-.534-.444-.46-.615-.469-.158-.008-.339-.01-.52-.01-.18 0-.475.068-.724.339-.249.271-.95 1.287-.95 3.136s1.356 3.635 1.545 3.883c.188.249 2.666 4.072 6.459 5.705.902.389 1.607.621 2.156.796.906.288 1.732.247 2.384.15.727-.108 2.234-.913 2.544-1.796.309-.882.309-1.638.217-1.796-.093-.158-.339-.249-.586-.384z"/></svg>
+    Enviar Pedido (S/. 0.00)
+  `;
+  btn.onclick = enviarPedidoWhatsApp;
+  document.body.appendChild(btn);
+}
+
+// 4. Actualizar el precio acumulado en el botón flotante dinámicamente
+function actualizarBotonFlotante() {
   let total = 0;
   todosLosProductos.forEach(p => {
     total += p.cantidad * p.precioEntero;
   });
   
-  // Actualizar el valor visual en tu barra verde inferior de la web
-  const elementoTotal = document.getElementById('total-estimado-valor') || document.querySelector('footer b') || document.querySelector('.total-barra');
-  if(elementoTotal) {
-    elementoTotal.innerText = `S/. ${total.toFixed(2)}`;
+  const btn = document.getElementById('btn-whatsapp-flotante');
+  if(btn) {
+    btn.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.713-1.457L0 24zm6.59-4.846c1.66.986 3.292 1.493 4.9c1.495.004 5.428-1.746 6.55-4.9.124-.347.01-.644-.066-.763-.076-.12-.247-.193-.518-.327-.271-.135-1.604-.791-1.853-.882-.249-.09-.431-.135-.615.135-.183.27-.712.893-.872 1.074-.16.181-.32.203-.591.068-.271-.134-1.144-.421-2.179-1.343-.804-.715-1.347-1.602-1.505-1.872-.159-.27-.017-.417.118-.552.122-.121.27-.32.406-.479.135-.16.181-.271.271-.452.09-.18.045-.339-.022-.474-.068-.135-.615-1.482-.843-2.029-.222-.534-.444-.46-.615-.469-.158-.008-.339-.01-.52-.01-.18 0-.475.068-.724.339-.249.271-.95 1.287-.95 3.136s1.356 3.635 1.545 3.883c.188.249 2.666 4.072 6.459 5.705.902.389 1.607.621 2.156.796.906.288 1.732.247 2.384.15.727-.108 2.234-.913 2.544-1.796.309-.882.309-1.638.217-1.796-.093-.158-.339-.249-.586-.384z"/></svg>
+      Enviar Pedido (S/. ${total.toFixed(2)})
+    `;
+    // Efecto de animación discreto al cambiar el monto
+    btn.style.transform = "scale(1.05)";
+    setTimeout(() => btn.style.transform = "scale(1)", 150);
   }
 }
 
-// 5. FUNCIÓN PARA ENVIAR EL PEDIDO POR WHATSAPP AL DAR CLIC AL BOTÓN
+// 5. Armar el mensaje y disparar la API de WhatsApp
 function enviarPedidoWhatsApp() {
   const pedidoFiltrado = todosLosProductos.filter(p => p.cantidad > 0);
   
   if (pedidoFiltrado.length === 0) {
-    alert("Por favor, agrega al menos una cantidad a un producto antes de enviar.");
+    alert("Tu carrito está vacío. Por favor agrega la cantidad a algún producto.");
     return;
   }
   
-  let mensaje = "🛒 *NUEVO PEDIDO - DISTRIBUIDORA TGI*\n\n";
+  let mensaje = "🛒 *NUEVO PEDIDO - DISTRIBUIDORA TGI*\n";
+  mensaje += "===============================\n\n";
   let totalPedido = 0;
   
   pedidoFiltrado.forEach((p, idx) => {
     const subtotal = p.cantidad * p.precioEntero;
     totalPedido += subtotal;
     
-    mensaje += `${idx + 1}. *${p.producto}*\n`;
-    mensaje += `   Cantidad: ${p.cantidad} ${p.medida}\n`;
-    mensaje += `   Precio: S/. ${p.precioEntero.toFixed(2)} | Subtotal: S/. ${subtotal.toFixed(2)}\n`;
+    mensaje += `*${idx + 1}. ${p.producto}* (${p.medida.toLowerCase()})\n`;
+    mensaje += `   Cantidad: *${p.cantidad}* x S/. ${p.precioEntero.toFixed(2)}\n`;
     if(p.nota) {
-      mensaje += `   📝 *Nota:* _${p.nota}_\n`;
+      mensaje += `   📝 _Nota: ${p.nota}_\n`;
     }
-    mensaje += `---------------------------\n`;
+    mensaje += `   Subtotal: *S/. ${subtotal.toFixed(2)}*\n`;
+    mensaje += `--------------------------------\n`;
   });
   
-  mensaje += `\n💰 *TOTAL ESTIMADO: S/. ${totalPedido.toFixed(2)}*`;
+  mensaje += `\n💰 *TOTAL NETO ESTIMADO: S/. ${totalPedido.toFixed(2)}*`;
   
-  // Enlace oficial de la API de WhatsApp
   const urlWhatsApp = `https://whatsapp.com{NÚMERO_WHATSAPP}&text=${encodeURIComponent(mensaje)}`;
   window.open(urlWhatsApp, '_blank');
 }
 
-// 6. Corregir y reactivar la función 'filtrar' de la línea 47
+// Buscador optimizado para la barra superior
 function filtrar() {
-  const cuadroBusqueda = document.querySelector('input[type="text"]') || document.querySelector('input');
-  if(!cuadroBusqueda) return;
-  const textoBuscar = cuadroBusqueda.value.toUpperCase().trim();
-  
-  if (textoBuscar === "") {
-    mostrarCatalogoCompleto(todosLosProductos);
-    return;
-  }
-  
-  const filtrados = todosLosProductos.filter(item => 
-    item.producto.toUpperCase().includes(textoBuscar) || 
-    item.categoria.toUpperCase().includes(textoBuscar)
-  );
-  
-  mostrarCatalogoCompleto(filtrados);
-}
-
-window.addEventListener('DOMContentLoaded', cargarWebMatriz);
-</script>
