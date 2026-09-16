@@ -58,37 +58,45 @@
 </div>
 
 <script>
-    // ENLACE Y TELÉFONO CORREGIDOS 100% EXTRAS DESDE TU GOOGLE SHEETS REAL
-    const URL_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQchkb5a-PIZNgWkAco6eSXKwaP_1ql7hvnOEhVCJ4FHdD-sLbTUlGmRlEonqgAEdpPwe3oQD_9rQil/pub?gid=1297525487&single=true&output=csv"; 
+    // SISTEMA BLINDADO POR ID DE GOOGLE SHEETS
+    const SPREADSHEET_ID = "1vQchkb5a-PIZNgWkAco6eSXkWaP_1ql7hvnOEhVCJ4FHdD-sLbTU1GmRlEonqgAEDpPwe3oQD_9rQi1";
+    const SHEET_NAME = "WEB_MATRIZ";
     const TELEFONO = "51917764281"; 
 
+    const URL_JSON = `https://google.com{SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
     let productosDatos = [];
 
     async function cargarExcel() {
         try {
-            const res = await fetch(URL_CSV);
-            const data = await res.text();
-            const filas = data.split("\n").slice(1);
+            const res = await fetch(URL_JSON);
+            const text = await res.text();
+            
+            // Limpiar la respuesta segura de Google para extraer las celdas exactas
+            const jsonText = text.substring(text.indexOf("(") + 1, text.lastIndexOf(")"));
+            const data = JSON.parse(jsonText);
+            const rows = data.table.rows;
+            
             productosDatos = [];
 
-            filas.forEach((fila, idx) => {
-                const col = fila.split(",");
-                if(col.length >= 3 && col[0] && col[0].trim() !== "") {
+            rows.forEach((row, idx) => {
+                const cells = row.c;
+                // Validamos que tenga información la fila antes de procesar
+                if(cells && cells[0] && cells[0].v) {
                     productosDatos.push({
                         id: idx,
-                        categoria: col[0] ? col[0].trim().toUpperCase() : "GENERAL", 
-                        producto: col[1] ? col[1].trim() : "", 
-                        medida: col[2] ? col[2].trim() : "Kilo", 
-                        p_entero: parseFloat(col[4]) || 0, 
-                        p_fraccion: parseFloat(col[10]) || null, 
-                        p_mayorista: parseFloat(col[11]) || null, 
-                        estado: col[5] ? col[5].trim().toLowerCase() : "congelado" 
+                        categoria: cells[0] ? cells[0].v.toString().toUpperCase().trim() : "GENERAL", // Columna A
+                        producto: cells[1] ? cells[1].v.toString().trim() : "", // Columna B
+                        medida: cells[2] ? cells[2].v.toString().trim() : "Kilo", // Columna C
+                        p_entero: cells[4] ? parseFloat(cells[4].v) || 0 : 0, // Columna E (PRECIO FINAL ENTERO)
+                        p_fraccion: cells[10] ? parseFloat(cells[10].v) || null : null, // Columna K (PRECIO FINAL FRACCION)
+                        p_mayorista: cells[11] ? parseFloat(cells[11].v) || null : null, // Columna L (GANANCIA MAYORISTA)
+                        estado: cells[5] ? cells[5].v.toString().toLowerCase().trim() : "congelado" // Columna F (ESTADISTICA)
                     });
                 }
             });
             renderizarPorGrupos(productosDatos);
         } catch (e) {
-            document.getElementById("catalogo").innerText = "Sincronizando los grupos... Revisa la conexión con tu Google Sheets.";
+            document.getElementById("catalogo").innerText = "Sincronizando los grupos... Asegúrate de otorgar el permiso 'Cualquier persona con el enlace' en Google Sheets.";
         }
     }
 
@@ -97,7 +105,7 @@
         cat.innerHTML = "";
 
         if (lista.length === 0) {
-            cat.innerText = "No se encontraron productos en la matriz. Verifica la primera columna de tu hoja.";
+            cat.innerText = "No se encontraron productos. Revisa los títulos en tu Google Sheets.";
             return;
         }
 
@@ -167,20 +175,3 @@
         const bus = document.getElementById("inputBuscador").value.toLowerCase().trim();
         
         document.querySelectorAll(".card").forEach(c => {
-            c.style.display = c.getAttribute("data-nom").includes(bus) ? "block" : "none";
-        });
-
-        document.querySelectorAll(".seccion-grupo").forEach(grupo => {
-            let visibles = grupo.querySelectorAll('.card[style="display: block;"]').length;
-            if (bus !== "" && visibles === 0) {
-                grupo.style.display = "none";
-            } else {
-                grupo.style.display = "block";
-            }
-        });
-    }
-
-    function enviarPedido() {
-        let cliente = document.getElementById("nombreCliente").value.trim();
-        if(!cliente) return alert("Por favor, ingresa tu nombre.");
-
