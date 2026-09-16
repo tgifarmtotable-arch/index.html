@@ -1,14 +1,14 @@
-<!-- SISTEMA PREMIUM DISTRIBUIDORA TGI: PESTAÑAS + COMPACTO + WHATSAPP -->
-<div id="tgi-sistema-tienda" style="font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; max-width: 800px; margin: 0 auto; padding: 10px;">
+<!-- SISTEMA COMERCIAL PREMIUM DISTRIBUIDORA TGI: PESTAÑAS INDEPENDIENTES -->
+<div id="tgi-sistema-tienda" style="font-family: 'Segoe UI', Roboto, sans-serif; max-width: 750px; margin: 0 auto; padding: 15px; background: #ffffff;">
   
-  <!-- BARRA DE PESTAÑAS (SE GENERAN AUTOMÁTICAMENTE) -->
-  <div id="tgi-pestañas-contenedor" style="display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; margin-bottom: 15px; border-bottom: 1px solid #e0e0e0; scrollbar-width: none;">
-    <!-- Las pestañas elegantes aparecerán aquí -->
+  <!-- MENÚ DE PESTAÑAS SUPERIOR -->
+  <div id="tgi-pestañas-contenedor" style="display: flex; gap: 10px; overflow-x: auto; padding: 10px 5px; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+    <!-- Las pestañas se inyectarán de forma automática aquí -->
   </div>
 
-  <!-- CONTENEDOR DE LOS PRODUCTOS -->
+  <!-- AREA DE EXPOSICIÓN DE PRODUCTOS DEL GRUPO -->
   <div id="contenedor-productos">
-    <p style="text-align: center; color: #666; font-size: 0.95em; padding: 20px;">Cargando catálogo premium...</p>
+    <p style="text-align: center; color: #888; font-size: 0.95em; padding: 30px;">Cargando catálogo elegante...</p>
   </div>
 
 </div>
@@ -18,7 +18,7 @@ let todosLosProductos = [];
 let categoriaActiva = ""; 
 const NÚMERO_WHATSAPP = "51917764281"; 
 
-// 1. Descargar base de datos CSV de la WEB MATRIZ
+// 1. Descargar la Web Matriz CSV de Google Sheets
 async function cargarWebMatriz() {
   const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbPkbgiCxe2RMmyLOrObjSI7yG6u9sszjPvC0BM8mKb3S4Q_lhZLqAaOdAhFW6glpChhoWvdYpHan7/pub?gid=1523459015&single=true&output=csv";
   
@@ -30,20 +30,20 @@ async function cargarWebMatriz() {
     
     for(let i = 1; i < filas.length; i++) {
       const celda = filas[i];
-      if (celda.length >= 6 && celda && celda.trim() !== "") {
+      if (celda.length >= 6 && celda && celda[0].trim() !== "") {
         todosLosProductos.push({
           id: i,
-          categoria: celda[0].replace(/"/g, "").trim(),
-          producto: celda[1].replace(/"/g, "").trim(),
-          medida: celda[2].replace(/"/g, "").trim(),
-          precioEntero: parseFloat(celda[5].replace(/"/g, "").trim()) || 0,
+          categoria: celda[0].replace(/"/g, "").trim(), // Columna A
+          producto: celda[1].replace(/"/g, "").trim(),  // Columna B
+          medida: celda[2].replace(/"/g, "").trim(),    // Columna C
+          precioEntero: parseFloat(celda[5].replace(/"/g, "").trim()) || 0, // Columna F
           cantidad: 0,
           nota: ""
         });
       }
     }
     
-    // Definir la primera categoría como activa por defecto
+    // Fijar el primer grupo visible por defecto
     if(todosLosProductos.length > 0) {
       categoriaActiva = todosLosProductos[0].categoria;
     }
@@ -51,74 +51,75 @@ async function cargarWebMatriz() {
     dibujarInterfazMatriz();
     inyectarBotonWhatsApp();
   } catch (error) {
-    console.error("Error al cargar la matriz comercial:", error);
+    console.error("Error al conectar con la matriz de datos:", error);
   }
 }
 
-// 2. Dibujar las Pestañas y la Pantalla del Grupo Seleccionado
+// 2. Construir la pantalla limpia por grupo (Formato compacto de alta costura)
 function dibujarInterfazMatriz() {
   const contenedorPestañas = document.getElementById('tgi-pestañas-contenedor');
   const contenedorProductos = document.getElementById('contenedor-productos');
   
   if (!contenedorProductos) return;
 
-  // Obtener categorías únicas para las pestañas
-  const categorias Unicas = [...new Set(todosLosProductos.map(p => p.categoria))];
+  // Extraer las categorías sin repetir
+  const categoriasUnicas = [...new Set(todosLosProductos.map(p => p.categoria))];
 
-  // Dibujar botones de pestañas elegantes
+  // Crear botones de pestañas horizontales independientes
   if(contenedorPestañas) {
     contenedorPestañas.innerHTML = categoriasUnicas.map(cat => {
       const esActiva = cat === categoriaActiva;
       return `
         <button onclick="cambiarGrupo('${cat}')" style="
-          padding: 8px 16px;
-          background: ${esActiva ? '#1E8449' : '#f5f5f5'};
-          color: ${esActiva ? '#ffffff' : '#555555'};
-          border: 1px solid ${esActiva ? '#1E8449' : '#dddddd'};
-          border-radius: 20px;
-          font-size: 0.9em;
+          padding: 8px 18px;
+          background: ${esActiva ? '#1E8449' : '#f8f9fa'};
+          color: ${esActiva ? '#ffffff' : '#4a5568'};
+          border: 1px solid ${esActiva ? '#1E8449' : '#e2e8f0'};
+          border-radius: 25px;
+          font-size: 0.88em;
           font-weight: 600;
           cursor: pointer;
           white-space: nowrap;
-          transition: all 0.2s ease;
-          box-shadow: ${esActiva ? '0 2px 6px rgba(30,132,73,0.3)' : 'none'};
+          transition: all 0.2s ease-in-out;
+          box-shadow: ${esActiva ? '0 3px 8px rgba(30,132,73,0.25)' : 'none'};
         ">${cat}</button>
       `;
     }).join('');
   }
 
-  // Filtrar productos solo del grupo activo
+  // Filtrar únicamente los productos pertenecientes a la pestaña activa
   const productosDelGrupo = todosLosProductos.filter(p => p.categoria === categoriaActiva);
 
-  // Dibujar el listado ultracompacto y fino estilo gourmet
   let htmlProductos = `
-    <div style="display: flex; flex-direction: column; gap: 4px; background: #ffffff; padding: 5px; border-radius: 8px;">
+    <div style="display: flex; flex-direction: column; gap: 5px; background: #ffffff;">
   `;
 
   productosDelGrupo.forEach(prod => {
+    const prodOriginal = todosLosProductos.find(p => p.id === prod.id);
+    
     htmlProductos += `
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #f2f2f2; font-size: 0.92em; gap: 10px;">
+      <div class="tgi-tarjeta" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: #ffffff; border-bottom: 1px solid #f1f5f9; gap: 12px;">
         
-        <!-- Detalle Producto -->
-        <div style="flex: 2; text-align: left;">
-          <span style="font-weight: 600; color: #2c3e50;">${prod.producto}</span>
-          <span style="color: #7f8c8d; font-size: 0.85em; margin-left: 3px;">(${prod.medida.toLowerCase()})</span>
+        <!-- Nombre Corto e Indicador de Medida -->
+        <div style="flex: 2; text-align: left; font-size: 0.92em;">
+          <span style="font-weight: 600; color: #1a202c; display: block; line-height: 1.2;">${prodOriginal.producto}</span>
+          <span style="color: #718096; font-size: 0.8em; font-weight: 400;">Unid: ${prodOriginal.medida.toLowerCase()}</span>
         </div>
         
-        <!-- Notas Finitas y Cantidad -->
-        <div style="flex: 3; display: flex; align-items: center; gap: 6px; justify-content: flex-end;">
-          <input type="text" placeholder="Nota: maduro, pinto..." value="${prod.nota || ''}" 
-            oninput="actualizarNota(${prod.id}, this.value)" 
-            style="width: 100%; max-width: 160px; padding: 5px 8px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 0.82em; color: #444; background: #fafafa; outline: none;">
+        <!-- Bloque de Entradas Compactas (Notas + Selector en una sola línea) -->
+        <div style="flex: 3; display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
+          <input type="text" placeholder="Nota: pinto, maduro..." value="${prodOriginal.nota || ''}" 
+            oninput="actualizarNota(${prodOriginal.id}, this.value)" 
+            style="width: 100%; max-width: 160px; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 0.82em; color: #334155; background: #f8fafc; outline: none; border-style: solid;">
           
-          <input type="number" min="0" placeholder="0" value="${prod.cantidad || ''}" 
-            oninput="actualizarCantidad(${prod.id}, this.value)" 
-            style="width: 45px; padding: 4px; border: 1px solid #cccccc; border-radius: 4px; text-align: center; font-size: 0.9em; font-weight: bold; color: #2c3e50; outline: none;">
+          <input type="number" min="0" placeholder="0" value="${prodOriginal.cantidad || ''}" 
+            oninput="actualizarCantidad(${prodOriginal.id}, this.value)" 
+            style="width: 45px; padding: 4px; border: 1px solid #cbd5e1; border-radius: 5px; text-align: center; font-size: 0.9em; font-weight: bold; color: #1a202c; background: #ffffff; outline: none; border-style: solid;">
         </div>
 
-        <!-- Precio Fino -->
-        <div style="min-width: 65px; text-align: right; font-weight: 700; color: #27AE60;">
-          S/. ${prod.precioEntero.toFixed(2)}
+        <!-- Muestra del Precio Neto -->
+        <div style="min-width: 70px; text-align: right; font-weight: 700; color: #2ecc71; font-size: 0.95em;">
+          S/. ${prodOriginal.precioEntero.toFixed(2)}
         </div>
 
       </div>
@@ -129,7 +130,7 @@ function dibujarInterfazMatriz() {
   contenedorProductos.innerHTML = htmlProductos;
 }
 
-// 3. Cambiar de pestaña al hacer clic
+// Intercambiador manual de grupos
 function cambiarGrupo(nuevoGrupo) {
   categoriaActiva = nuevoGrupo;
   dibujarInterfazMatriz();
@@ -148,7 +149,7 @@ function actualizarNota(id, valor) {
   if(prod) prod.nota = valor.trim();
 }
 
-// 4. Crear e inyectar el botón flotante premium de WhatsApp
+// 3. Sistema dinámico de botón flotante para WhatsApp
 function inyectarBotonWhatsApp() {
   if (document.getElementById('btn-whatsapp-flotante')) return;
 
@@ -162,9 +163,9 @@ function inyectarBotonWhatsApp() {
     color: white;
     padding: 12px 22px;
     border-radius: 50px;
-    font-size: 0.95em;
+    font-size: 0.92em;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(30,132,73,0.4);
+    box-shadow: 0 4px 15px rgba(30,132,73,0.35);
     cursor: pointer;
     z-index: 999999;
     display: flex;
@@ -195,12 +196,12 @@ function actualizarBotonFlotante() {
   }
 }
 
-// 5. Compilar pedido y disparar a WhatsApp
+// 4. Compilar resumen final para WhatsApp Web
 function enviarPedidoWhatsApp() {
   const pedidoFiltrado = todosLosProductos.filter(p => p.cantidad > 0);
   
   if (pedidoFiltrado.length === 0) {
-    alert("Tu lista de pedido está vacía. Agrega cantidades primero.");
+    alert("Tu lista de pedido está vacía. Selecciona cantidades primero.");
     return;
   }
   
@@ -209,13 +210,3 @@ function enviarPedidoWhatsApp() {
   let totalPedido = 0;
   
   pedidoFiltrado.forEach((p, idx) => {
-    const subtotal = p.cantidad * p.precioEntero;
-    totalPedido += subtotal;
-    
-    mensaje += `*${idx + 1}. ${p.producto}* (${p.medida.toLowerCase()})\n`;
-    mensaje += `   Cantidad: *${p.cantidad}* | S/. ${p.precioEntero.toFixed(2)}\n`;
-    if(p.nota) mensaje += `   📝 _Nota: ${p.nota}_\n`;
-    mensaje += `   Subtotal: *S/. ${subtotal.toFixed(2)}*\n`;
-    mensaje += `--------------------------------\n`;
-  });
-  
