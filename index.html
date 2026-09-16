@@ -13,14 +13,12 @@
         .container { max-width: 600px; margin: 15px auto; padding: 0 15px; }
         .cliente-input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; box-sizing: border-box; }
         
-        /* Títulos de los Grupos de tu Matriz */
         .grupo-titulo { background: #e8f5e9; color: var(--verde-tgi); padding: 10px; margin-top: 25px; margin-bottom: 12px; border-radius: 6px; font-size: 1.2rem; font-weight: bold; border-left: 5px solid var(--verde-tgi); text-transform: uppercase; }
         
-        /* Tarjetas con alertas de color basadas en tu Excel */
         .card { background: white; padding: 15px; margin-bottom: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-left: 6px solid #ccc; }
-        .card.bajo { border-left-color: #2e7d32; background: #e8f5e9; } /* Verde - Bajó */
-        .card.subio { border-left-color: #fbc02d; background: #fffde7; } /* Amarillo - Subió */
-        .card.congelado { border-left-color: #0288d1; background: #e1f5fe; } /* Azul - Se mantiene */
+        .card.bajo { border-left-color: #2e7d32; background: #e8f5e9; } 
+        .card.subio { border-left-color: #fbc02d; background: #fffde7; } 
+        .card.congelado { border-left-color: #0288d1; background: #e1f5fe; } 
         
         .etiqueta-estado { font-size: 0.72rem; font-weight: bold; text-transform: uppercase; display: inline-block; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; }
         .bajo .etiqueta-estado { background: #2e7d32; color: white; }
@@ -45,15 +43,12 @@
     <p>Pre-Pedido de Carga Diario</p>
 </header>
 
-<!-- Dejamos un buscador general arriba por si el cliente tiene prisa y quiere filtrar rápido -->
 <div class="buscador-box">
     <input type="text" id="inputBuscador" placeholder="🔍 ¿Buscas algo específico? Escribe aquí..." oninput="filtrar()">
 </div>
 
 <div class="container">
     <input type="text" id="nombreCliente" class="cliente-input" placeholder="👤 Escribe tu Nombre o Negocio (Obligatorio)">
-    
-    <!-- Aquí el sistema pintará todos los grupos y productos ordenados -->
     <div id="catalogo">Conectando con tu lista de precios por grupos...</div>
 </div>
 
@@ -63,7 +58,7 @@
 </div>
 
 <script>
-    // TU ENLACE Y WHATSAPP SINCRONIZADOS DE TU HOJA UNIFICADA
+    // ⚠️ REEMPLAZA ÚNICAMENTE ESTE ENLACE DE GOOGLE SHEETS
     const URL_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQchkb5a-PIZNgWkAco6eSXKwaP_1ql7hvnOEhVCJ4FHdD-sLbTUlGmRlEonqgAEdpPwe3oQD_9rQil/pub?gid=1297525487&single=true&output=csv"; 
     const TELEFONO = "51917764281"; 
 
@@ -78,22 +73,22 @@
 
             filas.forEach((fila, idx) => {
                 const col = fila.split(",");
-                if(col.length >= 3 && col[0].trim() !== "") {
+                if(col.length >= 3 && col[1].trim() !== "") {
                     productosDatos.push({
                         id: idx,
-                        categoria: col[0] ? col[0].trim().toUpperCase() : "VERDURAS", // Lee la columna A como el Grupo
-                        producto: col[1] ? col[1].trim() : "", // Producto
-                        medida: col[2] ? col[2].trim() : "Kilo", // Medida
-                        p_entero: parseFloat(col[3]) || 0, // Precio Entero
-                        p_fraccion: parseFloat(col[4]) || null, // Precio Fracción
-                        p_mayorista: parseFloat(col[5]) || null, // Margen Mayorista
-                        estado: col[6] ? col[6].trim().toLowerCase() : "congelado" // Estado de color
+                        categoria: col[0] ? col[0].trim().toUpperCase() : "GENERAL",
+                        producto: col[1] ? col[1].trim() : "",
+                        medida: col[2] ? col[2].trim() : "Kilo",
+                        p_entero: parseFloat(col[3]) || 0,
+                        p_fraccion: parseFloat(col[4]) || null,
+                        p_mayorista: parseFloat(col[5]) || null,
+                        estado: col[6] ? col[6].trim().toLowerCase() : "congelado"
                     });
                 }
             });
             renderizarPorGrupos(productosDatos);
         } catch (e) {
-            document.getElementById("catalogo").innerText = "Sincronizando los grupos... Asegúrate de que la hoja WEB MATRIZ tenga los datos.";
+            document.getElementById("catalogo").innerText = "Sincronizando los grupos... Revisa la conexión con tu Google Sheets.";
         }
     }
 
@@ -101,17 +96,20 @@
         const cat = document.getElementById("catalogo");
         cat.innerHTML = "";
 
-        // Agrupar los artículos de tu Excel por su categoría automáticamente
+        if (lista.length === 0) {
+            cat.innerText = "No se encontraron productos en la matriz. Verifica las filas de tu hoja.";
+            return;
+        }
+
         let grupos = {};
         lista.forEach(p => {
             if (!grupos[p.categoria]) grupos[p.categoria] = [];
             grupos[p.categoria].push(p);
         });
 
-        // Pintar cada grupo con su título y sus tarjetas correspondientes
         for (let grupoNombre in grupos) {
             let grupoHtml = `<div class="seccion-grupo" data-grupo="${grupoNombre.toLowerCase()}">`;
-            grupoHtml += `<div class="grupo-titulo">📂 Seacción: ${grupoNombre}</div>`;
+            grupoHtml += `<div class="grupo-titulo">📂 Categoría: ${grupoNombre}</div>`;
             
             grupos[grupoNombre].forEach(p => {
                 let opcionFraccion = p.p_fraccion ? `<option value="0.5" data-p="${p.p_fraccion}">1/2 ${p.medida.toLowerCase()} (S/. ${p.p_fraccion.toFixed(2)})</option>` : "";
@@ -146,8 +144,10 @@
     function controlarCambio(id) {
         const selector = document.getElementById(`sel-${id}`);
         const inputNota = document.getElementById(`nota-${id}`);
-        inputNota.style.display = selector.value !== "0" ? "block" : "none";
-        if(selector.value === "0") inputNota.value = "";
+        if(selector) {
+            inputNota.style.display = selector.value !== "0" ? "block" : "none";
+            if(selector.value === "0") inputNota.value = "";
+        }
         calcularTotal();
     }
 
@@ -166,10 +166,22 @@
     function filtrar() {
         const bus = document.getElementById("inputBuscador").value.toLowerCase().trim();
         
-        // Filtrar tarjetas individuales
         document.querySelectorAll(".card").forEach(c => {
             c.style.display = c.getAttribute("data-nom").includes(bus) ? "block" : "none";
         });
 
-        // Ocultar los títulos de los grupos si no contienen ningún producto buscado
         document.querySelectorAll(".seccion-grupo").forEach(grupo => {
+            let visibles = grupo.querySelectorAll('.card[style="display: block;"]').length;
+            if (bus !== "" && visibles === 0) {
+                grupo.style.display = "none";
+            } else {
+                grupo.style.display = "block";
+            }
+        });
+    }
+
+    function enviarPedido() {
+        let cliente = document.getElementById("nombreCliente").value.trim();
+        if(!cliente) return alert("Por favor, ingresa tu nombre.");
+
+        let msg = `*NUEVO PRE-PEDIDO FRESCO TGI*\n*Cliente:* ${cliente}\n=========================\n\n`;
